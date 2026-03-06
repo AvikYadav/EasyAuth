@@ -15,9 +15,9 @@
   <!-- tab toggle — pass `this` so the function knows which button was clicked -->
   <div class="tabs">
     <button class="tab {% if mode == 'signup' or not mode %}active{% endif %}"
-            onclick="setMode('signup', this)">Sign up</button>
+            data-mode="signup">Sign up</button>
     <button class="tab {% if mode == 'login' %}active{% endif %}"
-            onclick="setMode('login', this)">Log in</button>
+            data-mode="login">Log in</button>
   </div>
 
   <h1 id="heading">{% if mode == 'login' %}Welcome back{% else %}Create account{% endif %}</h1>
