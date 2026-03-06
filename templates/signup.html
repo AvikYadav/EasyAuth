@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auth Service</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="static/style.css" rel="stylesheet" />
+</head>
+<body>
+
+<div class="card">
+  <div class="wordmark">Auth Service</div>
+
+  <!-- tab toggle — pass `this` so the function knows which button was clicked -->
+  <div class="tabs">
+    <button class="tab {% if mode == 'signup' or not mode %}active{% endif %}"
+            onclick="setMode('signup', this)">Sign up</button>
+    <button class="tab {% if mode == 'login' %}active{% endif %}"
+            onclick="setMode('login', this)">Log in</button>
+  </div>
+
+  <h1 id="heading">{% if mode == 'login' %}Welcome back{% else %}Create account{% endif %}</h1>
+  <p class="subtitle" id="subtitle">{% if mode == 'login' %}Log in to your account.{% else %}Get started — it only takes a minute.{% endif %}</p>
+
+  {% if error %}
+  <div class="error-banner">{{ error }}</div>
+  {% endif %}
+
+  <form action="/signup" method="POST" id="auth-form">
+
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" placeholder="john_doe"
+             autocomplete="username" required value="{{ username or '' }}" />
+    </div>
+
+    <!-- email — only shown on signup -->
+    <div class="field" id="email-field" style="{{ 'display:none' if mode == 'login' else '' }}">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" placeholder="you@example.com"
+             autocomplete="email" value="{{ email or '' }}" />
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" placeholder="Min. 8 characters"
+             autocomplete="current-password" required minlength="8" />
+    </div>
+
+    <!-- confirm password — only shown on signup -->
+    <div class="field" id="confirm-field" style="{{ 'display:none' if mode == 'login' else '' }}">
+      <label for="confirm">Confirm password</label>
+      <input id="confirm" name="confirm" type="password" placeholder="Repeat password"
+             autocomplete="new-password" minlength="8" />
+    </div>
+
+    <button class="btn" type="submit" id="submit-btn">
+      {% if mode == 'login' %}Log in{% else %}Create account{% endif %}
+    </button>
+
+  </form>
+
+</div>
+
+<script src="static/signup.js"></script>
+
+</body>
+</html>

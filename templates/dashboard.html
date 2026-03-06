@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — {{ username }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="/static/style.css" rel="stylesheet" />
+  <link href="/static/dashboard.css" rel="stylesheet" />
+</head>
+<body>
+
+<!-- ── Top Bar ─────────────────────────────────────────────────────────────── -->
+<div class="topbar">
+  <span class="wordmark">Auth Service</span>
+  <div class="topbar-right">
+    <span class="topbar-user">{{ username }}</span>
+    <a href="/logout" class="topbar-logout">Log out</a>
+  </div>
+</div>
+
+<!-- ── Main ───────────────────────────────────────────────────────────────── -->
+<div class="dashboard-wrap">
+
+  <div class="dashboard-header">
+    <div>
+      <h1 class="dashboard-title">Services</h1>
+      <p class="dashboard-subtitle">{{ services | length }} service{{ 's' if services | length != 1 else '' }} registered</p>
+    </div>
+    <button class="btn btn-sm" onclick="openCreate()">+ New service</button>
+  </div>
+
+  {% with api_key_messages = get_flashed_messages(category_filter=["api_key"]) %}
+  {% if api_key_messages %}
+  <div class="api-key-banner">
+    <div class="api-key-banner-top">
+      <span class="api-key-banner-title">Service created — save your API key now</span>
+      <span class="api-key-banner-warn">It will not be shown again.</span>
+    </div>
+    <code class="api-key-value">{{ api_key_messages[0] }}</code>
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <!-- ── Service List ──────────────────────────────────────────────────────── -->
+  {% if services %}
+  <div class="service-list">
+    {% for svc in services %}
+    <div class="service-card">
+
+      <!-- card header -->
+      <div class="service-card-header">
+        <span class="service-name">{{ svc.service_name }}</span>
+        <div class="service-card-actions">
+          <button class="btn-edit"
+                  data-service="{{ svc.service_name }}"
+                  data-callback="{{ svc.data.callback_url }}">Edit</button>
+          <button class="btn-delete"
+                  data-service="{{ svc.service_name }}">Delete</button>
+        </div>
+      </div>
+
+      <!-- card details grid -->
+      <div class="service-card-grid">
+        <div class="svc-field">
+          <span class="svc-field-label">Users</span>
+          <span class="svc-field-value">{{ svc.users | length }} user{{ 's' if svc.users | length != 1 else '' }}</span>
+        </div>
+        <div class="svc-field">
+          <span class="svc-field-label">Service URL</span>
+          <span class="svc-field-value svc-mono">{{ request.host_url }}auth/{{ username }}/{{ svc.service_name }}</span>
+        </div>
+        <div class="svc-field">
+          <span class="svc-field-label">Callback URL</span>
+          <span class="svc-field-value svc-mono">{{ svc.data.callback_url }}</span>
+        </div>
+        <div class="svc-field">
+          <span class="svc-field-label">Created</span>
+          <span class="svc-field-value">{{ svc.created_at }}</span>
+        </div>
+        <div class="svc-field">
+          <span class="svc-field-label">Last updated</span>
+          <span class="svc-field-value">{{ svc.updated_at }}</span>
+        </div>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>No services yet.</p>
+    <button class="btn btn-sm" onclick="openCreate()">Create your first service</button>
+  </div>
+  {% endif %}
+
+</div>
+
+
+<!-- ── Create Service Overlay ────────────────────────────────────────────── -->
+<div class="overlay" id="create-overlay" onclick="closeCreate(event)">
+  <div class="popup">
+    <button class="popup-close" onclick="closeAll()">✕</button>
+    <div class="popup-label">New service</div>
+    <h2 class="popup-title">Register a service</h2>
+
+    <form action="/dashboard/create-service" method="POST">
+      <div class="field">
+        <label for="svc-name">Service name</label>
+        <input id="svc-name" name="service_name" type="text" placeholder="my_app" required />
+      </div>
+      <div class="field">
+        <label for="svc-url">Callback URL</label>
+        <input id="svc-url" name="callback_url" type="url" placeholder="https://myapp.com/callback" required />
+      </div>
+      <button class="btn" type="submit" style="margin-top:8px;">Create service</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ── Edit Service Overlay ───────────────────────────────────────────────── -->
+<div class="overlay" id="edit-overlay" onclick="closeEdit(event)">
+  <div class="popup">
+    <button class="popup-close" onclick="closeAll()">✕</button>
+    <div class="popup-label">Edit service</div>
+    <h2 class="popup-title" id="edit-service-title"></h2>
+
+    <form action="/dashboard/edit-service" method="POST">
+      <input type="hidden" name="service_name" id="edit-service-name" />
+      <div class="field">
+        <label for="edit-callback-url">Callback URL</label>
+        <input id="edit-callback-url" name="callback_url" type="url"
+               placeholder="https://myapp.com/callback" required />
+      </div>
+      <button class="btn" type="submit" style="margin-top:8px;">Save changes</button>
+    </form>
+  </div>
+</div>
+
+
+<script src="/static/dashboard.js"></script>
+</body>
+</html>

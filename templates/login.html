@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log In</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="static/style.css" rel="stylesheet" />
+</head>
+<body>
+
+<div class="card">
+  <div class="wordmark">Auth Service</div>
+  <h1>Welcome back</h1>
+  <p class="subtitle">Log in to your account.</p>
+
+  {% if error %}
+  <div class="error-banner">{{ error }}</div>
+  {% endif %}
+
+  <form action="/login" method="POST">
+
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" placeholder="john_doe"
+             autocomplete="username" required
+             value="{{ username or '' }}" />
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" placeholder="Password"
+             autocomplete="current-password" required />
+    </div>
+
+    <button class="btn" type="submit">Log in</button>
+
+  </form>
+
+  <p class="footer">Don't have an account? <a href="/">Sign up</a></p>
+</div>
+
+</body>
+</html>

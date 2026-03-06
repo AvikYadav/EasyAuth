@@ -1,0 +1,365 @@
+/* ── Reset body for full-page layout ─────────────────────────────────────── */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  margin: 0;
+}
+
+/* ── Top Bar ─────────────────────────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 68px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.topbar-user {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 12px;
+}
+
+.topbar-logout {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.topbar-logout:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+
+/* ── Topbar wordmark override ────────────────────────────────────────────── */
+.topbar .wordmark {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-transform: none;
+}
+/* ── Main content area ───────────────────────────────────────────────────── */
+.dashboard-wrap {
+  flex: 1;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 40px;
+  box-sizing: border-box;
+}
+
+/* ── Header row ──────────────────────────────────────────────────────────── */
+.dashboard-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.dashboard-title {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+
+.dashboard-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  margin: 0;
+}
+
+.btn-sm {
+  padding: 10px 18px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+
+/* ── Service card ────────────────────────────────────────────────────────── */
+.service-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.service-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+}
+
+.service-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.service-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 32px;
+}
+
+.svc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.svc-field-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.svc-field-value {
+  font-size: 13px;
+  color: var(--ink);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.svc-mono {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+}
+
+
+
+/* ── Service card action buttons ─────────────────────────────────────────── */
+.service-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-edit {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.btn-edit:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--bg);
+}
+/* ── Delete button ───────────────────────────────────────────────────────── */
+.btn-delete {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.btn-delete:hover {
+  border-color: #c0392b;
+  color: #c0392b;
+  background: #fdf0ef;
+}
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+.empty-state {
+  width: 100%;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 72px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+/* ── Overlay backdrop ────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 17, 16, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 100;
+}
+
+.overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── Popup ───────────────────────────────────────────────────────────────── */
+.popup {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+  transform: translateY(20px);
+  transition: transform 0.25s cubic-bezier(.22,.68,0,1.2);
+  box-sizing: border-box;
+}
+
+.overlay.open .popup { transform: translateY(0); }
+
+.popup-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.popup-close:hover { color: var(--ink); }
+
+.popup-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.popup-title {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0 0 28px;
+}
+
+.popup-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.popup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.popup-field:first-child { padding-top: 0; }
+.popup-field:last-child  { border-bottom: none; padding-bottom: 0; }
+
+.popup-field-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.popup-field-value {
+  font-size: 14px;
+  color: var(--ink);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+/* ── Create form inside popup ────────────────────────────────────────────── */
+.popup .field { margin-bottom: 16px; }
+.popup .field:last-of-type { margin-bottom: 0; }
+
+
+.api-key-banner {
+  border: 1px solid #b7e4c7;
+  background: #edfaf3;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.api-key-banner-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.api-key-banner-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a7a40;
+}
+
+.api-key-banner-warn {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #1a7a40;
+  opacity: 0.7;
+}
+
+.api-key-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 10px 14px;
+  word-break: break-all;
+}
