@@ -4,17 +4,24 @@
 
 Stop rebuilding login flows. EasyAuth gives you a fully hosted, production-grade authentication system — sign up, log in, session management, encrypted tokens, per-user data storage — in the time it takes to make coffee.
 
----
-
-## Seriously. Under a minute.
-
 ```
-1. Register at easyauth.dev
-2. Create a service → get your API key
-3. Point your app to /auth/<you>/<your-service>
+ Create Account  ──────►  Create Service  ──────►  Enjoy
+  easyauth.dev             grab API key            ship faster
 ```
 
 That's it. EasyAuth handles the rest.
+
+---
+
+## See It Live
+
+```
+ Signed up as `dummy`  ──────►  Created service `new_app`  ──────►  Live auth page ✓
+```
+
+**[http://easy-auth.dev/auth/dummy/new_app](http://easy-auth.dev/auth/dummy/new_app)**
+
+That URL is all we had to set up. Everything on that page — the form, the validation, the password hashing, the token — is handled by EasyAuth.
 
 ---
 
