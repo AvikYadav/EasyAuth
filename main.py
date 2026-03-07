@@ -12,23 +12,28 @@ app.config['SECRET_KEY'] = secrets.token_hex(32)
 
 db = database.connect_to_database()
 
+'''
+Note from developer-
+the below SECURITY MIDDLEWARE is implemented directly in our deployment environment
+'''
+
 # --- SECURITY MIDDLEWARE ---
-@app.after_request
-def add_security_headers(response):
-    """Applies global security headers to every response."""
-    # Strict CSP: Only allow content from our own origin
-    csp = (
-        "default-src 'self'; "
-        "script-src 'self'; "
-        "object-src 'none'; "
-        "frame-ancestors 'none';"
-    )
-    response.headers['Content-Security-Policy'] = csp
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    # Ensures the browser only uses HTTPS for the next year
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    return response
+# @app.after_request
+# def add_security_headers(response):
+#     """Applies global security headers to every response."""
+#     # Strict CSP: Only allow content from our own origin
+#     csp = (
+#         "default-src 'self'; "
+#         "script-src 'self'; "
+#         "object-src 'none'; "
+#         "frame-ancestors 'none';"
+#     )
+#     response.headers['Content-Security-Policy'] = csp
+#     response.headers['X-Content-Type-Options'] = 'nosniff'
+#     response.headers['X-Frame-Options'] = 'DENY'
+#     # Ensures the browser only uses HTTPS for the next year
+#     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+#     return response
 
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
