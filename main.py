@@ -349,10 +349,11 @@ def update_user_data(user, service):
 
     database.service_update_user_data(db,user, service, username,user_data)
 
-    return (jsonify({"status":"SUCCESS"}), 200
+    return jsonify({"status":"SUCCESS"}), 200
 
 
-@app.route("/verify/<user>/<service>", methods=["POST"]))
+
+@app.route("/verify/<user>/<service>", methods=["POST"])
 def verify_user_data(user, service):
     data = request.get_json()
     token = data.get("token")
