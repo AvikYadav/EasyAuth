@@ -1,5 +1,7 @@
 # ⚡ EasyAuth
-
+![Python](badge)
+![License](badge)
+![Version](badge)
 **Add auth to any app in under a minute. No compromises on security.**
 
 Stop rebuilding login flows. EasyAuth gives you a fully hosted, production-grade authentication system — sign up, log in, session management, encrypted tokens, per-user data storage — in the time it takes to make coffee.
