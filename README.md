@@ -88,11 +88,9 @@ Every platform user gets their own MongoDB collection. There are no shared table
 
 ---
 
-## For the Sceptical Senior Dev
+## For the Sceptical Dev
 
-> *"Is this actually production-ready, or is it a toy?"*
-
-Fair question. Here's the checklist:
+> Here's the checklist:
 
 | Concern | What EasyAuth does |
 |---|---|
