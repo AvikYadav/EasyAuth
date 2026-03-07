@@ -1,9 +1,9 @@
 import jwt
 import uuid
 from datetime import datetime, timezone, timedelta
-
+import secrets
 # ── Config ─────────────────────────────────────────────────────────────────────
-JWT_SECRET_KEY  = "your-secret-key-change-this-in-production"
+JWT_SECRET_KEY  = secrets.token_hex(35)
 JWT_ALGORITHM   = "HS256"
 JWT_EXPIRY_HOURS = 5
 
