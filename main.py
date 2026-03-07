@@ -314,7 +314,7 @@ def retrieve_user_data(user, service):
     if user_database is None:
         return jsonify({"error": "Invalid Token"}), 404
 
-    return jsonify(user_database['user_data']), 200
+    return jsonify({"username":username,"data":user_database['user_data']}), 200
 
 
 @app.route("/update/<user>/<service>", methods=["POST"])
