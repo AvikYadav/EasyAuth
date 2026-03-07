@@ -1,7 +1,5 @@
 # ⚡ EasyAuth
-![Python](badge)
-![License](badge)
-![Version](badge)
+
 **Add auth to any app in under a minute. No compromises on security.**
 
 Stop rebuilding login flows. EasyAuth gives you a fully hosted, production-grade authentication system — sign up, log in, session management, encrypted tokens, per-user data storage — in the time it takes to make coffee.
@@ -9,6 +7,16 @@ Stop rebuilding login flows. EasyAuth gives you a fully hosted, production-grade
 ```
  Create Account  ──────►  Create Service  ──────►  Enjoy
   easyauth.dev             grab API key            ship faster
+```
+
+---
+
+## Seriously. Under a minute.
+
+```
+1. Register at easyauth.dev
+2. Create a service → get your API key
+3. Point your app to /auth/<you>/<your-service>
 ```
 
 That's it. EasyAuth handles the rest.
@@ -41,24 +49,26 @@ https://yourapp.com/callback?token=<encrypted_token>
 
 Decrypt it with your API key, and you're in.
 
+---
+
+## Integrate With Your App
+
+EasyAuth works with any stack that can make an HTTP request. For popular frameworks, we have official SDKs that make integration even simpler.
+
+### Flask — one line and EasyAuth is in your app
+
+Add `@login_required` to any route. That's it. Your existing code doesn't change.
+
 ```python
-from easy_auth import LoginConnector
-
-auth = LoginConnector(
-    base_url="https://easyauth.dev",
-    username="your_username",
-    service_name="your_service",
-    api_key="your_api_key"
-)
-
-# Verify a user's token
-user = auth.get_user_data(token)
-
-# Store data against a user
-auth.send_user_data(token, {"theme": "dark", "plan": "pro"})
+@app.route("/dashboard")
+@login_required          # ← one line. full auth. done.
+def dashboard(token):
+    ...
 ```
 
-No database setup. No session tables. No JWT libraries. **Just works.**
+📦 [AvikYadav/EasyAuth_Flask-Connector](https://github.com/AvikYadav/EasyAuth_Flask-Connector)
+
+> More SDKs coming — Django, React, and others are on the roadmap.
 
 ---
 
