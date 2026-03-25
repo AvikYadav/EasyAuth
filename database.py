@@ -427,7 +427,8 @@ def service_create_user_entry(username, password,email,jwt):
         "email": email,
         "is_verified": False,
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "jwt":jwt
+        "jwt":jwt,
+        "user_data":[]
     }
 
 # ──────────────────────────────────────────────────────────────────────────────
