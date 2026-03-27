@@ -300,3 +300,14 @@ input.error-input { border-color: var(--error); }
   margin-bottom: 20px;
   font-family: 'DM Mono', monospace;
 }
+
+/* ── Powered by badge ── */
+.powered-by {
+  display: block;
+  text-align: right;
+  margin-top: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
