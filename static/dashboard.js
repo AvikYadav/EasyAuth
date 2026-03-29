@@ -1,66 +1,35 @@
-// ── Create Overlay ────────────────────────────────────────────────────────────
+// ── Create overlay ────────────────────────────────────────────────────────────
+
+var createOverlay = document.getElementById("create-overlay");
 
 function openCreate() {
-  document.getElementById("create-overlay").classList.add("open");
+  createOverlay.classList.add("open");
 }
 
-function closeCreate(event) {
-  if (event.target === document.getElementById("create-overlay")) {
-    document.getElementById("create-overlay").classList.remove("open");
-  }
+function closeCreate() {
+  createOverlay.classList.remove("open");
 }
 
-// ── Edit Overlay ──────────────────────────────────────────────────────────────
+// ── Event listeners (CSP safe — no inline handlers) ──────────────────────────
 
-function openEdit(serviceName, currentCallbackUrl) {
-  document.getElementById("edit-service-title").textContent  = serviceName;
-  document.getElementById("edit-service-name").value         = serviceName;
-  document.getElementById("edit-callback-url").value         = currentCallbackUrl;
-  document.getElementById("edit-overlay").classList.add("open");
-}
+// "+" New service button (header)
+var btnNew = document.getElementById("btn-new-service");
+if (btnNew) btnNew.addEventListener("click", openCreate);
 
-function closeEdit(event) {
-  if (event.target === document.getElementById("edit-overlay")) {
-    document.getElementById("edit-overlay").classList.remove("open");
-  }
-}
+// "Create your first service" button (empty state)
+var btnEmpty = document.getElementById("btn-empty-create");
+if (btnEmpty) btnEmpty.addEventListener("click", openCreate);
 
-// ── Close All (✕ button) ──────────────────────────────────────────────────────
+// Close button inside popup
+var btnClose = document.getElementById("btn-close-create");
+if (btnClose) btnClose.addEventListener("click", closeCreate);
 
-function closeAll() {
-  document.getElementById("create-overlay").classList.remove("open");
-  document.getElementById("edit-overlay").classList.remove("open");
-}
-
-// ── Button clicks — event delegation (CSP safe) ───────────────────────────────
-
-document.addEventListener("click", function (e) {
-
-  // Edit button
-  const editBtn = e.target.closest(".btn-edit");
-  if (editBtn) {
-    openEdit(editBtn.dataset.service, editBtn.dataset.callback);
-    return;
-  }
-
-  // Delete button
-  const deleteBtn = e.target.closest(".btn-delete");
-  if (deleteBtn) {
-    const serviceName = deleteBtn.dataset.service;
-    if (!confirm(`Delete service "${serviceName}"? This cannot be undone.`)) return;
-
-    fetch(`/dashboard/delete-service/${serviceName}`, { method: "POST" })
-      .then(res => {
-        if (res.ok) window.location.reload();
-        else alert("Failed to delete service.");
-      });
-    return;
-  }
-
+// Click backdrop to close
+createOverlay.addEventListener("click", function (e) {
+  if (e.target === createOverlay) closeCreate();
 });
 
-// ── Keyboard: Escape closes overlays ─────────────────────────────────────────
-
+// Escape key closes overlay
 document.addEventListener("keydown", function (e) {
-  if (e.key === "Escape") closeAll();
+  if (e.key === "Escape") closeCreate();
 });

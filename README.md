@@ -1,12 +1,12 @@
 # ⚡ EasyAuth
-**[easy-auth](http://easy-auth.dev)**
+**[easy-auth.dev](http://easy-auth.dev)**
 **Add auth to any app in under a minute. No compromises on security.**
 
 Stop rebuilding login flows. EasyAuth gives you a fully hosted, production-grade authentication system — sign up, log in, session management, encrypted tokens, per-user data storage — in the time it takes to make coffee.
 
 ```
- Create Account  ──────►  Create Service  ──────►  Enjoy
-  easyauth.dev             grab API key            ship faster
+ Create Account  ──────►  Create Service  ──────►  Make It Yours  ──────►  Ship
+  easyauth.dev             grab API key             pick a template          faster
 ```
 
 ---
@@ -51,6 +51,34 @@ Decrypt it with your API key, and you're in.
 
 ---
 
+## Make It Look Like Yours
+
+The auth page your users see is fully yours to design — no CSS hacks, no iframe workarounds.
+
+**Start from a template.** Pick one of five pre-built layouts from your service settings:
+
+```
+ Marketing Header    Left Brand Panel    Announcement Banner
+ ─────────────────   ────────────────    ───────────────────
+ Dark nav + footer   Split: brand left,  Slim promo bar at
+ above the card.     auth card right.    top + 3-col footer.
+
+ Testimonial Strip   Stepped Onboarding
+ ─────────────────   ──────────────────
+ Social proof on     Progress bar + step
+ the right panel.    dots around card.
+```
+
+**Then customize everything.** The built-in page editor lets you:
+- Swap colors, fonts, border radius, and button styles from a side panel
+- Drag in extra blocks — text, images, banners, spacers — above or below the card
+- Switch between stacked and side-by-side layouts
+- Save and see changes live at your auth URL
+
+No design tool required. No deploy step. Changes go live instantly.
+
+---
+
 ## Integrate With Your App
 
 EasyAuth works with any stack that can make an HTTP request. For popular frameworks, we have official SDKs that make integration even simpler.
@@ -75,9 +103,12 @@ def dashboard(token):
 ## What You Get Out of the Box
 
 - ✅ Sign up & login UI — hosted, styled, ready to go
+- ✅ Five page templates — pick a layout and open the editor in one click
+- ✅ Visual page editor — drag-drop blocks, live style controls, no code required
 - ✅ Encrypted token delivery to your callback URL
 - ✅ Per-user data storage — read and write arbitrary JSON per user per service
 - ✅ Token verification endpoint — confirm any token is valid in one call
+- ✅ Activity dashboard — per-service logs, stats, and event filtering
 - ✅ Full isolation — your service's users are completely separate from every other service
 - ✅ Works with any stack — if it can make an HTTP request, it works
 
@@ -100,7 +131,7 @@ When a user authenticates through your service, the JWT is **encrypted with your
 Every platform user gets their own MongoDB collection. There are no shared tables, no multi-tenant query filters that could be bypassed. Your users' data lives in your namespace and only your namespace.
 
 ### XSS — strict Content Security Policy
-`script-src 'self'` is enforced across every page. Zero inline event handlers exist in any template — all JS runs from external files attached via `addEventListener`. An injected script has nowhere to execute.
+`script-src 'self'` is enforced across every page. Zero inline event handlers exist in any template — all JS runs from external files attached via `addEventListener`. User-supplied HTML in the page editor is sanitized with an allowlist before storage.
 
 ### CSRF — blocked at the browser
 `SameSite=Strict` on the session cookie means cross-origin requests never carry credentials. No CSRF tokens needed because the browser won't send the cookie at all.
@@ -114,10 +145,10 @@ Every platform user gets their own MongoDB collection. There are no shared table
 | Concern | What EasyAuth does |
 |---|---|
 | Password storage | bcrypt, cost 12, constant-time verify |
-| Session tokens | HS256 JWT, 5hr expiry, unique `jti` per token |
+| Session tokens | HS256 JWT, 1hr expiry, unique `jti` per token |
 | Cookie security | HttpOnly + Secure + SameSite=Strict |
 | Token in transit | Fernet-encrypted before leaving the server |
-| XSS | Strict CSP, zero inline handlers |
+| XSS | Strict CSP, zero inline handlers, allowlist HTML sanitizer |
 | CSRF | SameSite=Strict makes CSRF tokens redundant |
 | Data isolation | Per-user MongoDB collections, not rows in a shared table |
 | Duplicate accounts | Unique partial index at DB level, race-condition safe |
@@ -149,7 +180,7 @@ Prefer to run it yourself? Clone and go:
 
 ```bash
 git clone https://github.com/you/easyauth
-pip install flask pymongo python-dotenv pyjwt bcrypt cryptography
+pip install flask pymongo python-dotenv pyjwt bcrypt cryptography bleach
 echo "mongo_url=your_mongo_connection_string" > .env
 python main.py
 ```
@@ -160,7 +191,7 @@ Add your MongoDB connection string and you're running a fully self-hosted auth s
 
 ## Stack
 
-Python · Flask · MongoDB · PyJWT · Fernet · bcrypt
+Python · Flask · MongoDB · PyJWT · Fernet · bcrypt · bleach
 
 ---
 

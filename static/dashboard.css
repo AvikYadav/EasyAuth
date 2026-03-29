@@ -3,10 +3,13 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   background: var(--bg);
   font-family: 'DM Sans', sans-serif;
   color: var(--ink);
   margin: 0;
+  padding: 0;
 }
 
 /* ── Top Bar ─────────────────────────────────────────────────────────────── */
@@ -15,12 +18,24 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 40px;
-  height: 68px;
-  border-bottom: 1px solid var(--border);
+  height: 56px;
+  border-bottom: none;
   background: var(--surface);
   flex-shrink: 0;
   width: 100%;
   box-sizing: border-box;
+  position: relative;
+}
+
+/* Accent gradient line at the bottom of topbar */
+.topbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #34d399, #3b82f6, #a78bfa);
 }
 
 .topbar-right {
@@ -32,7 +47,7 @@ body {
 .topbar-user {
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink);
   background: var(--bg);
   border: 1px solid var(--border);
@@ -45,26 +60,30 @@ body {
   font-weight: 400;
   color: var(--muted);
   text-decoration: none;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 1px;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color 0.15s;
 }
 
 .topbar-logout:hover {
   color: var(--ink);
-  border-color: var(--ink);
 }
 
-
-/* ── Topbar wordmark override ────────────────────────────────────────────── */
+/* ── Topbar wordmark ─────────────────────────────────────────────────────── */
 .topbar .wordmark {
   font-family: 'DM Sans', sans-serif;
-  font-size: 22px;
-  font-weight: 300;
-  letter-spacing: 0.04em;
-  color: var(--muted);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
   text-transform: none;
+  margin-top: 25px;
 }
+
+.wordmark-accent {
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 2px;
+}
+
 /* ── Main content area ───────────────────────────────────────────────────── */
 .dashboard-wrap {
   flex: 1;
@@ -103,12 +122,17 @@ body {
   white-space: nowrap;
 }
 
-
-/* ── Service card ────────────────────────────────────────────────────────── */
+/* ── Service cards ────────────────────────────────────────────────────────── */
 .service-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.service-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 .service-card {
@@ -116,28 +140,55 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 20px 24px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.service-card:hover {
+  border-color: var(--ink);
+  box-shadow: 0 2px 8px rgba(17, 17, 16, 0.06);
 }
 
 .service-card-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
-.service-card-grid {
+.service-name {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.service-url {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+/* ── Metric grid inside service card ─────────────────────────────────────── */
+.service-card-metrics {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 32px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
-.svc-field {
+.metric {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
-.svc-field-label {
+.metric-value {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.metric-label {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   text-transform: uppercase;
@@ -145,62 +196,6 @@ body {
   color: var(--muted);
 }
 
-.svc-field-value {
-  font-size: 13px;
-  color: var(--ink);
-  word-break: break-all;
-  line-height: 1.4;
-}
-
-.svc-mono {
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-}
-
-
-
-/* ── Service card action buttons ─────────────────────────────────────────── */
-.service-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-edit {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 6px 14px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  color: var(--muted);
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-
-.btn-edit:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-  background: var(--bg);
-}
-/* ── Delete button ───────────────────────────────────────────────────────── */
-.btn-delete {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 6px 14px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  color: var(--muted);
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-
-.btn-delete:hover {
-  border-color: #c0392b;
-  color: #c0392b;
-  background: #fdf0ef;
-}
 /* ── Empty state ─────────────────────────────────────────────────────────── */
 .empty-state {
   width: 100%;
@@ -286,43 +281,11 @@ body {
   margin: 0 0 28px;
 }
 
-.popup-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.popup-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.popup-field:first-child { padding-top: 0; }
-.popup-field:last-child  { border-bottom: none; padding-bottom: 0; }
-
-.popup-field-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--muted);
-}
-
-.popup-field-value {
-  font-size: 14px;
-  color: var(--ink);
-  word-break: break-all;
-  line-height: 1.4;
-}
-
 /* ── Create form inside popup ────────────────────────────────────────────── */
 .popup .field { margin-bottom: 16px; }
 .popup .field:last-of-type { margin-bottom: 0; }
 
-
+/* ── API key banner ──────────────────────────────────────────────────────── */
 .api-key-banner {
   border: 1px solid #b7e4c7;
   background: #edfaf3;
@@ -362,4 +325,11 @@ body {
   border-radius: 5px;
   padding: 10px 14px;
   word-break: break-all;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .service-card-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
