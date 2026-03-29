@@ -1,4 +1,5 @@
 import bcrypt
+import json
 from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response, flash
 from datetime import datetime, timezone
 from urllib.parse import quote
@@ -7,9 +8,246 @@ import database
 import jwt_token
 import encryption
 import logger
+from sanitize import sanitize_html, sanitize_css
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex(32)
+
+# ── Page Templates ───────────────────────────────────────────────────────────
+
+PAGE_TEMPLATES = {
+    # ── Template 1: Marketing Site Header + Minimal Footer ─────────────────
+    "marketing-header": {
+        "name": "Marketing Site Header",
+        "description": "Fixed dark header with logo & nav, minimal footer.",
+        "layout": "column",
+        "above_html": (
+            '<header class="tpl-mh-header">'
+            '<span class="tpl-mh-brand">BRAND</span>'
+            '<nav class="tpl-mh-nav">'
+            '<a href="#">Features</a><a href="#">Pricing</a><a href="#">Docs</a>'
+            '</nav></header>'
+            '<div class="tpl-mh-spacer"></div>'
+        ),
+        "below_html": (
+            '<footer class="tpl-mh-footer">'
+            '<span class="tpl-mh-copy">&copy; 2026 Brand Inc.</span>'
+            '<div class="tpl-mh-links">'
+            '<a href="#">Privacy</a><a href="#">Terms</a>'
+            '</div></footer>'
+        ),
+        "extra_css": (
+            ".tpl-mh-header{width:100%;background:#111110;padding:0 40px;display:flex;"
+            "align-items:center;justify-content:space-between;height:60px;"
+            "position:fixed;top:0;left:0;right:0;z-index:100;}"
+            ".tpl-mh-brand{color:#fff;font-size:14px;font-weight:500;letter-spacing:0.1em;}"
+            ".tpl-mh-nav{display:flex;gap:24px;}"
+            ".tpl-mh-nav a{color:rgba(255,255,255,0.7);font-size:13px;text-decoration:none;}"
+            ".tpl-mh-spacer{height:60px;width:100%;display:block;}"
+            ".tpl-mh-footer{width:100%;padding:24px 40px;border-top:1px solid #e2e1da;"
+            "display:flex;align-items:center;justify-content:space-between;margin-top:40px;}"
+            ".tpl-mh-copy{font-size:11px;color:#888884;}"
+            ".tpl-mh-links{display:flex;gap:20px;}"
+            ".tpl-mh-links a{font-size:12px;color:#888884;text-decoration:none;}"
+        ),
+        "style_data": {
+            "pageBg": "#f7f6f2", "pageAlign": "center", "pageLayout": "column",
+            "cardBg": "#ffffff", "cardBorder": "#e2e1da", "cardRadius": "12",
+            "headingColor": "#111110", "labelColor": "#888884",
+            "inputColor": "#111110", "inputBg": "#f7f6f2", "inputBorder": "#e2e1da",
+            "btnBg": "#111110", "btnColor": "#ffffff", "btnRadius": "6",
+        },
+    },
+
+    # ── Template 2: Left Branding Panel + Right-Anchored Card ───────────────
+    "left-brand-panel": {
+        "name": "Left Branding Panel",
+        "description": "Row layout: dark brand panel on left, auth card on right.",
+        "layout": "row",
+        "above_html": (
+            '<div class="tpl-lbp">'
+            '<div class="tpl-lbp-logo">B</div>'
+            '<h2 class="tpl-lbp-heading">Build something great.</h2>'
+            '<p class="tpl-lbp-sub">The fastest way to add secure auth to your product.</p>'
+            '<ul class="tpl-lbp-list">'
+            '<li>JWT-based token auth</li>'
+            '<li>Custom branding &amp; theming</li>'
+            '<li>Real-time event logs</li>'
+            '</ul></div>'
+        ),
+        "below_html": "",
+        "extra_css": (
+            ".tpl-lbp{display:flex;flex-direction:column;justify-content:center;"
+            "padding:60px 48px;background:linear-gradient(160deg,#0f172a 0%,#1e3a5f 100%);"
+            "min-height:100vh;flex:1;}"
+            ".tpl-lbp-logo{width:48px;height:48px;background:#fff;border-radius:12px;"
+            "display:flex;align-items:center;justify-content:center;"
+            "margin-bottom:32px;font-size:22px;font-weight:700;color:#0f172a;}"
+            ".tpl-lbp-heading{color:#fff;font-size:28px;font-weight:600;"
+            "letter-spacing:-0.02em;margin-bottom:12px;}"
+            ".tpl-lbp-sub{color:rgba(255,255,255,0.65);font-size:15px;line-height:1.6;"
+            "margin-bottom:40px;max-width:340px;}"
+            ".tpl-lbp-list{list-style:none;padding:0;margin:0;display:flex;"
+            "flex-direction:column;gap:14px;}"
+            ".tpl-lbp-list li{color:rgba(255,255,255,0.8);font-size:14px;"
+            "padding-left:28px;position:relative;}"
+            ".tpl-lbp-list li::before{content:'\\2713';position:absolute;left:0;"
+            "width:20px;height:20px;background:rgba(255,255,255,0.15);"
+            "border-radius:50%;display:flex;align-items:center;justify-content:center;"
+            "font-size:11px;top:50%;transform:translateY(-50%);}"
+        ),
+        "style_data": {
+            "pageBg": "#f8fafc", "pageAlign": "center", "pageLayout": "row",
+            "cardBg": "#ffffff", "cardBorder": "#e2e8f0", "cardRadius": "0",
+            "headingColor": "#0f172a", "labelColor": "#64748b",
+            "inputColor": "#0f172a", "inputBg": "#f8fafc", "inputBorder": "#e2e8f0",
+            "btnBg": "#0f172a", "btnColor": "#ffffff", "btnRadius": "8",
+        },
+    },
+
+    # ── Template 3: Announcement Banner + Centered Card + Footer ───────────
+    "announcement-banner": {
+        "name": "Announcement Banner + Footer",
+        "description": "Slim banner at top, centered card, three-column footer.",
+        "layout": "column",
+        "above_html": (
+            '<div class="tpl-ab-bar">'
+            '<span class="tpl-ab-text">&#127881; Now in public beta &mdash; '
+            '<a href="#" class="tpl-ab-link">Sign up free &rarr;</a></span>'
+            '</div>'
+        ),
+        "below_html": (
+            '<footer class="tpl-ab-footer">'
+            '<div><div class="tpl-ab-col-title">Product</div>'
+            '<a href="#">Features</a><a href="#">Pricing</a><a href="#">Changelog</a></div>'
+            '<div><div class="tpl-ab-col-title">Company</div>'
+            '<a href="#">About</a><a href="#">Blog</a></div>'
+            '<div><div class="tpl-ab-col-title">Legal</div>'
+            '<a href="#">Privacy</a><a href="#">Terms</a></div>'
+            '</footer>'
+        ),
+        "extra_css": (
+            ".tpl-ab-bar{width:100%;background:#111110;padding:10px 20px;"
+            "display:flex;align-items:center;justify-content:center;}"
+            ".tpl-ab-text{color:#fff;font-size:13px;}"
+            ".tpl-ab-link{color:#93c5fd;text-decoration:none;font-weight:500;}"
+            ".tpl-ab-footer{width:100%;max-width:900px;margin-top:48px;"
+            "padding:32px 24px 0;border-top:1px solid #e2e1da;"
+            "display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}"
+            ".tpl-ab-col-title{font-size:11px;text-transform:uppercase;"
+            "letter-spacing:0.08em;color:#888884;margin-bottom:12px;}"
+            ".tpl-ab-footer a{display:block;font-size:13px;color:#111110;"
+            "text-decoration:none;margin-bottom:8px;}"
+        ),
+        "style_data": {
+            "pageBg": "#ffffff", "pageAlign": "flex-start", "pageLayout": "column",
+            "cardBg": "#ffffff", "cardBorder": "#e2e1da", "cardRadius": "16",
+            "headingColor": "#111110", "labelColor": "#888884",
+            "inputColor": "#111110", "inputBg": "#f7f6f2", "inputBorder": "#e2e1da",
+            "btnBg": "#111110", "btnColor": "#ffffff", "btnRadius": "8",
+        },
+    },
+
+    # ── Template 4: Top-Left Logo + Testimonial Strip ───────────────────────
+    "testimonial-strip": {
+        "name": "Top-Left Logo + Testimonials",
+        "description": "Row layout: auth card on left, testimonial column on right.",
+        "layout": "row",
+        "above_html": "",
+        "below_html": (
+            '<div class="tpl-ts">'
+            '<div class="tpl-ts-title">What people say</div>'
+            '<div class="tpl-ts-card">'
+            '<p class="tpl-ts-quote">&#8220;The simplest auth setup I&#8217;ve ever used. '
+            'Our team was up in 20 minutes.&#8221;</p>'
+            '<div class="tpl-ts-author">'
+            '<div class="tpl-ts-av tpl-ts-av1"></div>'
+            '<div><div class="tpl-ts-name">Sarah K.</div>'
+            '<div class="tpl-ts-role">CTO at Acme Co.</div></div>'
+            '</div></div>'
+            '<div class="tpl-ts-card">'
+            '<p class="tpl-ts-quote">&#8220;Finally an auth solution that doesn&#8217;t '
+            'require a PhD to configure.&#8221;</p>'
+            '<div class="tpl-ts-author">'
+            '<div class="tpl-ts-av tpl-ts-av2"></div>'
+            '<div><div class="tpl-ts-name">Marcus T.</div>'
+            '<div class="tpl-ts-role">Founder at Launchpad</div></div>'
+            '</div></div>'
+            '</div>'
+        ),
+        "extra_css": (
+            ".tpl-ts{display:flex;flex-direction:column;justify-content:center;"
+            "padding:60px 48px;background:#fafaf9;border-left:1px solid #e2e1da;"
+            "min-height:100vh;flex:1;gap:24px;}"
+            ".tpl-ts-title{font-size:11px;text-transform:uppercase;"
+            "letter-spacing:0.1em;color:#888884;}"
+            ".tpl-ts-card{background:#fff;border:1px solid #e2e1da;"
+            "border-radius:12px;padding:24px;}"
+            ".tpl-ts-quote{font-size:14px;color:#111110;line-height:1.6;margin-bottom:16px;}"
+            ".tpl-ts-author{display:flex;align-items:center;gap:10px;}"
+            ".tpl-ts-av{width:32px;height:32px;border-radius:50%;flex-shrink:0;}"
+            ".tpl-ts-av1{background:#111110;}.tpl-ts-av2{background:#374151;}"
+            ".tpl-ts-name{font-size:13px;font-weight:500;color:#111110;}"
+            ".tpl-ts-role{font-size:12px;color:#888884;}"
+        ),
+        "style_data": {
+            "pageBg": "#fafaf9", "pageAlign": "center", "pageLayout": "row",
+            "cardBg": "#ffffff", "cardBorder": "#e2e1da", "cardRadius": "0",
+            "headingColor": "#111110", "labelColor": "#888884",
+            "inputColor": "#111110", "inputBg": "#f7f6f2", "inputBorder": "#e2e1da",
+            "btnBg": "#111110", "btnColor": "#ffffff", "btnRadius": "6",
+        },
+    },
+
+    # ── Template 5: Stepped Onboarding Shell ───────────────────────────────
+    "stepped-onboarding": {
+        "name": "Stepped Onboarding",
+        "description": "Progress bar and step indicator above the card.",
+        "layout": "column",
+        "above_html": (
+            '<div class="tpl-so-top">'
+            '<div class="tpl-so-labels">'
+            '<span class="tpl-so-count">Step 1 of 3</span>'
+            '<span class="tpl-so-step-name">Account Setup</span>'
+            '</div>'
+            '<div class="tpl-so-bar"><div class="tpl-so-fill"></div></div>'
+            '</div>'
+        ),
+        "below_html": (
+            '<div class="tpl-so-dots">'
+            '<div class="tpl-so-dot tpl-so-dot-on"></div>'
+            '<div class="tpl-so-dot"></div>'
+            '<div class="tpl-so-dot"></div>'
+            '</div>'
+            '<p class="tpl-so-note">Already have an account? '
+            '<a href="#" class="tpl-so-link">Log in</a></p>'
+        ),
+        "extra_css": (
+            ".tpl-so-top{width:100%;max-width:500px;margin-bottom:24px;}"
+            ".tpl-so-labels{display:flex;align-items:center;"
+            "justify-content:space-between;margin-bottom:10px;}"
+            ".tpl-so-count{font-size:11px;text-transform:uppercase;"
+            "letter-spacing:0.08em;color:#888884;}"
+            ".tpl-so-step-name{font-size:12px;color:#888884;}"
+            ".tpl-so-bar{width:100%;height:4px;background:#e2e1da;"
+            "border-radius:99px;overflow:hidden;}"
+            ".tpl-so-fill{width:33%;height:100%;background:#111110;border-radius:99px;}"
+            ".tpl-so-dots{width:100%;max-width:500px;margin-top:20px;"
+            "display:flex;justify-content:center;gap:6px;}"
+            ".tpl-so-dot{width:8px;height:8px;border-radius:50%;background:#e2e1da;}"
+            ".tpl-so-dot-on{background:#111110;}"
+            ".tpl-so-note{text-align:center;font-size:13px;color:#888884;margin-top:16px;}"
+            ".tpl-so-link{color:#111110;font-weight:500;text-decoration:none;}"
+        ),
+        "style_data": {
+            "pageBg": "#f7f6f2", "pageAlign": "center", "pageLayout": "column",
+            "cardBg": "#ffffff", "cardBorder": "#e2e1da", "cardRadius": "12",
+            "headingColor": "#111110", "labelColor": "#888884",
+            "inputColor": "#111110", "inputBg": "#f7f6f2", "inputBorder": "#e2e1da",
+            "btnBg": "#111110", "btnColor": "#ffffff", "btnRadius": "6",
+        },
+    },
+}
 
 # ── Database connection ──────────────────────────────────────────────────────
 
@@ -20,6 +258,52 @@ db = database.connect_to_database()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
+def build_css_from_style_data(s: dict) -> str:
+    """Mirror of buildCss() in auth_editor.html — generates page CSS from style dict."""
+    page_bg      = s.get("pageBg",       "#f7f6f2")
+    page_align   = s.get("pageAlign",    "center")
+    page_layout  = s.get("pageLayout",   "column")
+    card_bg      = s.get("cardBg",       "#ffffff")
+    card_border  = s.get("cardBorder",   "#e2e1da")
+    card_radius  = s.get("cardRadius",   "12")
+    heading      = s.get("headingColor", "#111110")
+    label        = s.get("labelColor",   "#888884")
+    input_color  = s.get("inputColor",   "#111110")
+    input_bg     = s.get("inputBg",      "#f7f6f2")
+    input_border = s.get("inputBorder",  "#e2e1da")
+    btn_bg       = s.get("btnBg",        "#111110")
+    btn_color    = s.get("btnColor",     "#ffffff")
+    btn_radius   = s.get("btnRadius",    "6")
+
+    if page_layout == "row":
+        layout_css = (
+            f".page-wrapper {{ flex-direction: row; align-items: stretch; }}\n"
+            f".above-card {{ flex: 1; max-width: none; }}\n"
+            f".below-card {{ flex: 1; max-width: none; }}\n"
+            f".card {{ align-self: center; margin: 0 5%; flex-shrink: 0; }}\n"
+        )
+    else:
+        layout_css = (
+            f".page-wrapper {{ flex-direction: column; align-items: center; justify-content: {page_align}; }}\n"
+            f".above-card, .below-card {{ width: 100%; max-width: 500px; }}\n"
+        )
+
+    return (
+        f"html, body {{ background-color: {page_bg}; margin: 0; padding: 0; }}\n"
+        f".page-wrapper {{ background-color: {page_bg}; }}\n"
+        + layout_css
+        + f".card {{ background-color: {card_bg}; border-color: {card_border}; border-radius: {card_radius}px; }}\n"
+        f".card h1 {{ color: {heading}; }}\n"
+        f".field label {{ color: {label}; }}\n"
+        f".field input {{ color: {input_color}; background-color: {input_bg}; border-color: {input_border}; }}\n"
+        f".card .btn {{ background-color: {btn_bg}; color: {btn_color}; border-radius: {btn_radius}px; }}\n"
+        f".tabs {{ border-color: {card_border}; }}\n"
+        f".tab.active {{ background-color: {btn_bg}; color: {btn_color}; }}\n"
+        f".wordmark {{ color: {label}; }}\n"
+        f".powered-by {{ color: {label}; }}\n"
+    )
+
 
 def hash_password(password):
     """Hash a plaintext password with bcrypt (cost factor 12)."""
@@ -283,7 +567,8 @@ def service_detail(service_name):
 
     return render_template("service_detail.html",
                            username=username, service=service,
-                           stats=stats, logs=logs)
+                           stats=stats, logs=logs,
+                           templates=PAGE_TEMPLATES)
 
 
 @app.route("/dashboard/service/<service_name>/logs")
@@ -308,6 +593,91 @@ def service_logs_api(service_name):
     return api_response(data={"logs": logs})
 
 
+# ── Routes: Auth Page Builder ────────────────────────────────────────────────
+
+@app.route("/dashboard/service/<service_name>/edit-page")
+def edit_auth_page(service_name):
+    """GrapeJS editor for customizing the auth page appearance."""
+    payload, err = require_auth()
+    if err:
+        return err
+
+    username = payload["sub"]
+    service = database.get_service(db, username, service_name)
+    if not service:
+        return redirect("/dashboard")
+
+    service_data = service.get("data", {})
+    return render_template("auth_editor.html",
+                           username=username,
+                           service_name=service_name,
+                           page_above_html=service_data.get("page_above_html", ""),
+                           page_below_html=service_data.get("page_below_html", ""),
+                           page_css=service_data.get("page_css", ""),
+                           page_style_data=service_data.get("page_style_data", ""))
+
+
+@app.route("/dashboard/service/<service_name>/save-page", methods=["POST"])
+def save_auth_page(service_name):
+    """Save customized auth page HTML and CSS."""
+    payload, err = require_auth()
+    if err:
+        return jsonify({"ok": False, "error": "Auth required"}), 401
+
+    username = payload["sub"]
+    service = database.get_service(db, username, service_name)
+    if not service:
+        return jsonify({"ok": False, "error": "Service not found"}), 404
+
+    data = request.get_json()
+    above_html = sanitize_html(data.get("above_html", ""))
+    below_html = sanitize_html(data.get("below_html", ""))
+    page_css = sanitize_css(data.get("css", ""))
+    style_data = data.get("style_data", "")
+
+    database.update_service(db, username, service_name, {
+        "page_above_html": above_html,
+        "page_below_html": below_html,
+        "page_css":        page_css,
+        "page_style_data": style_data,
+        "page_layout":     (json.loads(style_data).get("pageLayout", "column") if style_data else "column"),
+    })
+
+    return jsonify({"ok": True})
+
+
+@app.route("/dashboard/service/<service_name>/apply-template", methods=["POST"])
+def apply_template(service_name):
+    """Apply a pre-defined page template to the service."""
+    payload, err = require_auth()
+    if err:
+        return jsonify({"ok": False, "error": "Auth required"}), 401
+
+    username = payload["sub"]
+    service = database.get_service(db, username, service_name)
+    if not service:
+        return jsonify({"ok": False, "error": "Service not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    template_id = data.get("template_id", "")
+    if template_id not in PAGE_TEMPLATES:
+        return jsonify({"ok": False, "error": "Unknown template"}), 400
+
+    tpl = PAGE_TEMPLATES[template_id]
+    css = build_css_from_style_data(tpl["style_data"])
+
+    database.update_service(db, username, service_name, {
+        "page_above_html": sanitize_html(tpl["above_html"]),
+        "page_below_html": sanitize_html(tpl["below_html"]),
+        "page_css":        sanitize_css(css),
+        "page_extra_css":  sanitize_css(tpl.get("extra_css", "")),
+        "page_style_data": json.dumps(tpl["style_data"]),
+        "page_layout":     tpl["layout"],
+    })
+
+    return jsonify({"ok": True, "redirect": f"/dashboard/service/{service_name}/edit-page"})
+
+
 # ── Routes: Service Auth Gate (third-party apps) ─────────────────────────────
 
 @app.route("/auth/<user>/<service>", methods=["GET", "POST"])
@@ -316,8 +686,19 @@ def auth(user, service):
     Third-party auth gate — renders signup/login UI for service users.
     On success, redirects to the service's callback URL with a Fernet-encrypted token.
     """
+    # Fetch custom page builder data for this service
+    service_doc = database.service_get_service_document(db, user, service)
+    svc_data = service_doc.get("data", {}) if service_doc else {}
+    page_vars = {
+        "page_above_html": svc_data.get("page_above_html", ""),
+        "page_below_html": svc_data.get("page_below_html", ""),
+        "page_css":        svc_data.get("page_css", ""),
+        "page_extra_css":  svc_data.get("page_extra_css", ""),
+    }
+
     if request.method == "GET":
-        return render_template("auth.html", user=user, service=service, mode="signup")
+        return render_template("auth.html", user=user, service=service,
+                               mode="signup", **page_vars)
 
     # Extract form fields
     submitted_username = request.form.get("username", "").strip()
@@ -329,7 +710,8 @@ def auth(user, service):
 
     def render_error(msg):
         return render_template("auth.html", user=user, service=service,
-                               mode=mode, error=msg, username=submitted_username)
+                               mode=mode, error=msg, username=submitted_username,
+                               **page_vars)
 
     if not submitted_username or not submitted_password:
         return render_error("Username and password are required.")

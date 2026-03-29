@@ -438,8 +438,11 @@ def service_create_user_entry(username, password,email,jwt):
 
 def insert_log(db, owner: str, service_name: str, log_data: dict):
     """
-    Insert a log event into the owner's collection.
-    Log documents use type="log" and are indexed by (service_name, timestamp).
+    Append a log entry to the service's single log document.
+
+    All events for a service are stored inside one document (type="service_logs")
+    as an array, capped at the 1000 most recent entries.  This avoids creating
+    one document per event and keeps the user's collection tidy.
 
     Args:
         db           : pymongo database instance
@@ -449,22 +452,33 @@ def insert_log(db, owner: str, service_name: str, log_data: dict):
     """
     collection = get_user_collection(db, owner)
 
-    # Idempotent index for efficient log queries (sorted by newest first)
-    collection.create_index(
-        [("type", 1), ("service_name", 1), ("timestamp", -1)],
-        partialFilterExpression={"type": "log"},
+    collection.update_one(
+        {"type": "service_logs", "service_name": service_name},
+        {
+            "$push": {
+                "logs": {
+                    "$each":  [log_data],
+                    "$sort":  {"timestamp": 1},   # keep array sorted ascending
+                    "$slice": -1000,              # cap at 1000 most recent entries
+                }
+            },
+            "$set":      {"updated_at": datetime.now(timezone.utc)},
+            "$setOnInsert": {
+                "created_at": datetime.now(timezone.utc),
+            },
+        },
+        upsert=True,
     )
-
-    log_data["type"] = "log"
-    log_data["service_name"] = service_name
-    collection.insert_one(log_data)
 
 
 def get_logs(db, owner: str, service_name: str,
              event=None, status=None, user_id=None,
              limit: int = 100, skip: int = 0) -> list[dict]:
     """
-    Query log events for a service with optional filters.
+    Return log entries for a service, newest first, with optional filters.
+
+    Reads from the single service_logs document and filters in Python.
+    The array is capped at 1000 entries so this is always fast.
 
     Args:
         db           : pymongo database instance
@@ -477,30 +491,38 @@ def get_logs(db, owner: str, service_name: str,
         skip         : Number of logs to skip for pagination
 
     Returns:
-        logs : List of log documents, newest first (without _id)
+        logs : List of log entry dicts, newest first
     """
     collection = get_user_collection(db, owner)
-    query = {"type": "log", "service_name": service_name}
-
-    if event:
-        query["event"] = event
-    if status:
-        query["status"] = status
-    if user_id:
-        query["user_id"] = user_id
-
-    return list(
-        collection.find(query, {"_id": 0})
-        .sort("timestamp", -1)
-        .skip(skip)
-        .limit(limit)
+    doc = collection.find_one(
+        {"type": "service_logs", "service_name": service_name},
+        {"_id": 0, "logs": 1},
     )
+    if not doc:
+        return []
+
+    logs = doc.get("logs", [])
+
+    # Apply optional filters
+    if event:
+        logs = [e for e in logs if e.get("event") == event]
+    if status:
+        logs = [e for e in logs if e.get("status") == status]
+    if user_id:
+        logs = [e for e in logs if e.get("user_id") == user_id]
+
+    # Array is sorted ascending — reverse for newest-first output
+    logs = list(reversed(logs))
+
+    return logs[skip : skip + limit]
 
 
 def get_service_stats(db, owner: str, service_name: str) -> dict:
     """
     Compute analytics for a service: total users, active users (1h),
     tokens issued (1h), tokens verified (1h), and last activity time.
+
+    Reads from the single service_logs document and computes stats in Python.
 
     Args:
         db           : pymongo database instance
@@ -521,53 +543,53 @@ def get_service_stats(db, owner: str, service_name: str) -> dict:
     })
     total_users = len(service_doc.get("users", [])) if service_doc else 0
 
+    # Fetch log entries from the single log document
+    log_doc = collection.find_one(
+        {"type": "service_logs", "service_name": service_name},
+        {"_id": 0, "logs": 1},
+    )
+    logs = log_doc.get("logs", []) if log_doc else []
+
     # Rolling window: last 1 hour
     one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
 
+    # Helper: check if a log entry falls within the last hour
+    def in_window(entry):
+        ts = entry.get("timestamp")
+        if ts is None:
+            return False
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        return ts >= one_hour_ago
+
+    recent = [e for e in logs if in_window(e)]
+
     # Active users — unique user_ids with any successful event in the window
-    pipeline = [
-        {"$match": {
-            "type": "log",
-            "service_name": service_name,
-            "status": "success",
-            "timestamp": {"$gte": one_hour_ago},
-            "user_id": {"$ne": None},
-        }},
-        {"$group": {"_id": "$user_id"}},
-        {"$count": "count"},
-    ]
-    result = list(collection.aggregate(pipeline))
-    active_users = result[0]["count"] if result else 0
+    active_users = len({
+        e["user_id"] for e in recent
+        if e.get("status") == "success" and e.get("user_id")
+    })
 
     # Tokens issued in last hour
-    tokens_issued = collection.count_documents({
-        "type": "log",
-        "service_name": service_name,
-        "event": "token_issued",
-        "timestamp": {"$gte": one_hour_ago},
-    })
-
-    # Tokens verified in last hour
-    tokens_verified = collection.count_documents({
-        "type": "log",
-        "service_name": service_name,
-        "event": {"$in": ["token_verified", "token_verify_fail"]},
-        "timestamp": {"$gte": one_hour_ago},
-    })
-
-    # Last activity — most recent log entry
-    last_log = collection.find_one(
-        {"type": "log", "service_name": service_name},
-        sort=[("timestamp", -1)],
+    tokens_issued = sum(
+        1 for e in recent if e.get("event") == "token_issued"
     )
-    last_activity = last_log["timestamp"] if last_log else None
+
+    # Tokens verified (or attempted) in last hour
+    tokens_verified = sum(
+        1 for e in recent
+        if e.get("event") in {"token_verified", "token_verify_fail"}
+    )
+
+    # Last activity — newest entry in the (ascending-sorted) array
+    last_activity = logs[-1]["timestamp"] if logs else None
 
     return {
-        "total_users":       total_users,
-        "active_users_1h":   active_users,
-        "tokens_issued_1h":  tokens_issued,
+        "total_users":        total_users,
+        "active_users_1h":    active_users,
+        "tokens_issued_1h":   tokens_issued,
         "tokens_verified_1h": tokens_verified,
-        "last_activity":     last_activity,
+        "last_activity":      last_activity,
     }
 
 

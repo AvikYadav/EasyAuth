@@ -1,0 +1,497 @@
+/* ── Back link ────────────────────────────────────────────────────────────── */
+.back-link {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  margin-bottom: 16px;
+  transition: color 0.15s;
+}
+.back-link:hover { color: var(--ink); }
+
+/* ── Detail header ────────────────────────────────────────────────────────── */
+.detail-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.detail-subtitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Tab bar ──────────────────────────────────────────────────────────────── */
+.detail-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+
+.detail-tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.detail-tab:hover { color: var(--ink); }
+
+.detail-tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+/* ── Tab panels ───────────────────────────────────────────────────────────── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Stats grid ───────────────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* ── Section title ────────────────────────────────────────────────────────── */
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+/* ── Activity table (overview tab) ────────────────────────────────────────── */
+.activity-table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.activity-table th {
+  text-align: left;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+}
+
+.activity-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.activity-table tr:last-child td { border-bottom: none; }
+
+.mono {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+}
+
+/* ── Event badge ──────────────────────────────────────────────────────────── */
+.event-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+/* ── Status indicators ────────────────────────────────────────────────────── */
+.status-success { color: #1a7a40; font-size: 12px; font-weight: 500; }
+.status-failure { color: #c0392b; font-size: 12px; font-weight: 500; }
+
+/* ── Log filters (logs tab) ───────────────────────────────────────────────── */
+.log-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.log-filters select,
+.log-filters input[type="text"] {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.log-filters select:focus,
+.log-filters input[type="text"]:focus {
+  border-color: var(--ink);
+}
+
+/* ── Log entries (clickable to expand) ────────────────────────────────────── */
+.log-entry {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.log-entry:hover { border-color: var(--ink); }
+
+.log-entry-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+}
+
+.log-entry-detail {
+  display: none;
+  padding: 0 16px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.log-entry[data-expanded="true"] .log-entry-detail {
+  display: block;
+}
+
+.log-detail-row {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 12px;
+}
+
+.log-detail-key {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 80px;
+  text-transform: uppercase;
+}
+
+.log-time {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.log-user {
+  color: var(--muted);
+}
+
+/* ── Settings (settings tab) ──────────────────────────────────────────────── */
+.settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.setting-item {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.setting-item:last-child { border-bottom: none; }
+
+.setting-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.setting-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--ink);
+  word-break: break-all;
+  background: var(--bg);
+  padding: 8px 12px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.setting-value-plain {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.setting-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.setting-form input {
+  width: 100%;
+  max-width: 500px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.setting-form input:focus {
+  border-color: var(--ink);
+}
+
+.setting-desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.setting-danger {
+  padding-top: 24px;
+}
+
+/* ── Delete service button ────────────────────────────────────────────────── */
+.btn-delete-service {
+  background: none;
+  border: 1px solid #c0392b;
+  border-radius: var(--radius);
+  padding: 8px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: #c0392b;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-delete-service:hover {
+  background: #c0392b;
+  color: #fff;
+}
+
+/* ── Empty state small ────────────────────────────────────────────────────── */
+.empty-state-sm {
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ── Responsive: stack stats on smaller screens ───────────────────────────── */
+@media (max-width: 700px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .log-entry-summary {
+    flex-wrap: wrap;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   TEMPLATE PICKER
+══════════════════════════════════════════════════════════ */
+
+.setting-item--templates { padding-bottom: 8px; }
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.template-card {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--surface);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.template-card:hover  { border-color: var(--ink); }
+.template-card.active {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(17,17,16,0.10);
+}
+
+/* ── Thumbnail container ── */
+.tpl-thumb {
+  width: 100%;
+  height: 100px;
+  background: #f0efeb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 6px;
+  overflow: hidden;
+}
+
+/* Row-layout thumbnails */
+.tpl-thumb--left-brand-panel,
+.tpl-thumb--testimonial-strip {
+  flex-direction: row;
+  padding: 0;
+  gap: 0;
+}
+
+/* ── Shared building blocks ── */
+.tpl-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.tpl-bar--dark   { background: #111110; }
+.tpl-bar--border { background: #dddcd6; height: 6px; }
+
+.tpl-card-mock {
+  width: 60%;
+  height: 42px;
+  background: #fff;
+  border: 1px solid #dddcd6;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.tpl-side {
+  height: 100%;
+  flex: 1;
+  flex-shrink: 0;
+}
+.tpl-side--dark  { background: #1e3a5f; }
+.tpl-side--light { background: #fafaf9; border-left: 1px solid #dddcd6; }
+
+/* Row thumbnails: card mock fills full height */
+.tpl-thumb--left-brand-panel .tpl-card-mock,
+.tpl-thumb--testimonial-strip .tpl-card-mock {
+  height: 100%;
+  width: 55%;
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid #dddcd6;
+  border-right: 1px solid #dddcd6;
+}
+
+.tpl-footer-3col {
+  width: 90%;
+  height: 14px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg,
+    #dddcd6 28%, transparent 28%, transparent 36%,
+    #dddcd6 36%, #dddcd6 64%, transparent 64%, transparent 72%,
+    #dddcd6 72%);
+  border-radius: 2px;
+}
+
+.tpl-progress-bar {
+  width: 72%;
+  height: 4px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #111110 33%, #e2e1da 33%);
+  border-radius: 99px;
+}
+
+.tpl-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.tpl-dots div {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e2e1da;
+}
+.tpl-dots div:first-child { background: #111110; }
+
+/* ── Card text ── */
+.tpl-card-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink);
+  padding: 8px 10px 2px;
+  line-height: 1.3;
+}
+.tpl-card-desc {
+  font-size: 10px;
+  color: var(--muted);
+  padding: 0 10px 10px;
+  line-height: 1.4;
+}
+
+/* ── Actions row ── */
+.tpl-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+.tpl-selected-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1000px) {
+  .template-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .template-grid { grid-template-columns: repeat(2, 1fr); }
+}

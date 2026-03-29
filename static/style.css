@@ -15,11 +15,12 @@ body {
   background: var(--bg);
   font-family: 'DM Sans', sans-serif;
   color: var(--ink);
-  min-height: 100vh;
+  margin: 0;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  min-height: 100vh;
 }
 
 /* ── card ── */
@@ -299,6 +300,22 @@ input.error-input { border-color: var(--error); }
   border-radius: 6px;
   margin-bottom: 20px;
   font-family: 'DM Mono', monospace;
+}
+
+/* ── Auth page wrapper (page builder target) ── */
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  width: 100%;
+  background: var(--bg);
+}
+.above-card, .below-card {
+  width: 100%;
+  max-width: 500px;
 }
 
 /* ── Powered by badge ── */
