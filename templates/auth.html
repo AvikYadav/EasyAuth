@@ -6,56 +6,79 @@
   <title>Auth — {{ service }}</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link href="/static/style.css" rel="stylesheet" />
+  {% if page_css %}
+  <style>{{ page_css | safe }}</style>
+  {% endif %}
+  {% if page_extra_css %}
+  <style>{{ page_extra_css | safe }}</style>
+  {% endif %}
 </head>
 <body>
 
-<div class="card">
-  <div class="wordmark">{{ service }}</div>
+<div id="page-wrapper" class="page-wrapper">
 
-  <!-- tab toggle -->
-  <div class="tabs">
-    <button class="tab {% if mode == 'signup' %}active{% endif %}"
-            data-mode="signup">Sign up</button>
-    <button class="tab {% if mode == 'login' %}active{% endif %}"
-            data-mode="login">Log in</button>
+  <div id="above-card" class="above-card">
+    {% if page_above_html %}
+    {{ page_above_html | safe }}
+    {% endif %}
   </div>
 
-  <h1 id="heading">{% if mode == 'login' %}Welcome back{% else %}Create account{% endif %}</h1>
+  <div class="card">
+    <div class="wordmark">{{ service }}</div>
 
-  {% if error %}
-  <div class="error-banner">{{ error }}</div>
-  {% endif %}
-
-  {% if message %}
-  <div class="success-banner">{{ message }}</div>
-  {% endif %}
-
-  <form action="" method="POST">
-    <input type="hidden" name="mode" id="mode-input" value="{{ mode or 'signup' }}" />
-
-    <div class="field">
-      <label for="username">Username</label>
-      <input id="username" name="username" type="text" placeholder="john_doe"
-             autocomplete="username" required value="{{ username or '' }}" />
+    <!-- tab toggle -->
+    <div class="tabs">
+      <button class="tab {% if mode == 'signup' %}active{% endif %}"
+              data-mode="signup">Sign up</button>
+      <button class="tab {% if mode == 'login' %}active{% endif %}"
+              data-mode="login">Log in</button>
     </div>
 
-    <!-- email — only shown on signup -->
-    <div class="field" id="email-field" style="{{ 'display:none' if mode == 'login' else '' }}">
-      <label for="email">Email</label>
-      <input id="email" name="email" type="email" placeholder="you@example.com"
-             autocomplete="email" value="{{ email or '' }}" />
-    </div>
+    <h1 id="heading">{% if mode == 'login' %}Welcome back{% else %}Create account{% endif %}</h1>
 
-    <div class="field">
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" placeholder="Min. 8 characters"
-             autocomplete="current-password" required minlength="8" />
-    </div>
+    {% if error %}
+    <div class="error-banner">{{ error }}</div>
+    {% endif %}
 
-    <button class="btn" type="submit" id="submit-btn">
-      {% if mode == 'login' %}Log in{% else %}Create account{% endif %}
-    </button>
-  </form>
+    {% if message %}
+    <div class="success-banner">{{ message }}</div>
+    {% endif %}
+
+    <form action="" method="POST">
+      <input type="hidden" name="mode" id="mode-input" value="{{ mode or 'signup' }}" />
+
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" placeholder="john_doe"
+               autocomplete="username" required value="{{ username or '' }}" />
+      </div>
+
+      <!-- email — only shown on signup -->
+      <div class="field" id="email-field" style="{{ 'display:none' if mode == 'login' else '' }}">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com"
+               autocomplete="email" value="{{ email or '' }}" />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Min. 8 characters"
+               autocomplete="current-password" required minlength="8" />
+      </div>
+
+      <button class="btn" type="submit" id="submit-btn">
+        {% if mode == 'login' %}Log in{% else %}Create account{% endif %}
+      </button>
+    </form>
+
+    <span class="powered-by">Powered by easy-auth</span>
+  </div>
+
+  <div id="below-card" class="below-card">
+    {% if page_below_html %}
+    {{ page_below_html | safe }}
+    {% endif %}
+  </div>
 
 </div>
 

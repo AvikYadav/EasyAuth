@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ service.service_name }} — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="/static/style.css" rel="stylesheet" />
+  <link href="/static/dashboard.css" rel="stylesheet" />
+  <link href="/static/service_detail.css" rel="stylesheet" />
+</head>
+<body>
+
+<!-- ── Top Bar ─────────────────────────────────────────────────────────────── -->
+<div class="topbar">
+  <span class="wordmark">EasyAuth <span class="wordmark-accent">AI</span></span>
+  <div class="topbar-right">
+    <span class="topbar-user">{{ username }}</span>
+    <a href="/logout" class="topbar-logout">Log out</a>
+  </div>
+</div>
+
+<!-- ── Main ───────────────────────────────────────────────────────────────── -->
+<div class="dashboard-wrap">
+
+  <!-- Back link + heading -->
+  <a href="/dashboard" class="back-link">&larr; Services</a>
+  <div class="detail-header">
+    <h1 class="dashboard-title">{{ service.service_name }}</h1>
+    <span class="detail-subtitle">{{ service.users | length }} user{{ 's' if service.users | length != 1 else '' }}</span>
+  </div>
+
+  <!-- ── Tab bar ──────────────────────────────────────────────────────────── -->
+  <div class="detail-tabs">
+    <button class="detail-tab active" data-tab="overview">Overview</button>
+    <button class="detail-tab" data-tab="logs">Logs</button>
+    <button class="detail-tab" data-tab="settings">Settings</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- OVERVIEW TAB                                                          -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="panel-overview">
+
+    <!-- Stats cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-value">{{ stats.total_users }}</span>
+        <span class="stat-label">Total Users</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ stats.active_users_1h }}</span>
+        <span class="stat-label">Active (1h)</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ stats.tokens_issued_1h }}</span>
+        <span class="stat-label">Tokens Issued (1h)</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ stats.tokens_verified_1h }}</span>
+        <span class="stat-label">Verified (1h)</span>
+      </div>
+    </div>
+
+    <!-- Recent activity table -->
+    <div class="section-title">Recent Activity</div>
+    <div class="activity-table-wrap">
+      {% if logs %}
+      <table class="activity-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Event</th>
+            <th>User</th>
+            <th>Status</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs[:20] %}
+          <tr>
+            <td class="mono">{{ log.timestamp | fmt_time }}</td>
+            <td><span class="event-badge">{{ log.event }}</span></td>
+            <td>{{ log.user_id or '—' }}</td>
+            <td><span class="status-{{ log.status }}">{{ log.status }}</span></td>
+            <td class="mono">{{ log.error_message or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state-sm">No activity yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- LOGS TAB                                                              -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-logs">
+
+    <!-- Filter bar -->
+    <div class="log-filters">
+      <select id="filter-event">
+        <option value="">All events</option>
+        <option value="signup_success">Signup success</option>
+        <option value="signup_fail">Signup fail</option>
+        <option value="login_success">Login success</option>
+        <option value="login_fail">Login fail</option>
+        <option value="token_issued">Token issued</option>
+        <option value="token_verified">Token verified</option>
+        <option value="token_verify_fail">Token verify fail</option>
+        <option value="data_read">Data read</option>
+        <option value="data_write">Data write</option>
+      </select>
+      <select id="filter-status">
+        <option value="">All statuses</option>
+        <option value="success">Success</option>
+        <option value="failure">Failure</option>
+      </select>
+      <input type="text" id="filter-user" placeholder="Search by user_id" />
+      <button class="btn btn-sm" id="apply-filters" data-service="{{ service.service_name }}">Filter</button>
+    </div>
+
+    <!-- Log entries (clickable to expand) -->
+    <div id="log-entries">
+      {% if logs %}
+        {% for log in logs %}
+        <div class="log-entry" data-expanded="false">
+          <div class="log-entry-summary">
+            <span class="log-time mono">{{ log.timestamp | fmt_time }}</span>
+            <span class="event-badge">{{ log.event }}</span>
+            <span class="status-{{ log.status }}">{{ log.status }}</span>
+            <span class="log-user">{{ log.user_id or '—' }}</span>
+          </div>
+          <div class="log-entry-detail">
+            <div class="log-detail-row"><span class="log-detail-key">IP</span><span>{{ log.ip or '—' }}</span></div>
+            <div class="log-detail-row"><span class="log-detail-key">Error</span><span>{{ log.error_message or '—' }}</span></div>
+            <div class="log-detail-row"><span class="log-detail-key">Metadata</span><span>{{ log.metadata }}</span></div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state-sm">No logs yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- SETTINGS TAB                                                          -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-settings">
+    <div class="settings-grid">
+
+      <div class="setting-item">
+        <span class="setting-label">Service URL</span>
+        <code class="setting-value">{{ request.host_url }}auth/{{ username }}/{{ service.service_name }}</code>
+      </div>
+
+      <div class="setting-item">
+        <span class="setting-label">Callback URL</span>
+        <code class="setting-value">{{ service.data.callback_url }}</code>
+      </div>
+
+      <div class="setting-item">
+        <span class="setting-label">Edit Callback URL</span>
+        <form action="/dashboard/edit-service" method="POST" class="setting-form">
+          <input type="hidden" name="service_name" value="{{ service.service_name }}" />
+          <input type="url" name="callback_url" value="{{ service.data.callback_url }}"
+                 placeholder="https://yourapp.com/callback" required />
+          <button class="btn btn-sm" type="submit">Save</button>
+        </form>
+      </div>
+
+      <!-- ── Choose Template ──────────────────────────────────── -->
+      <div class="setting-item setting-item--templates">
+        <span class="setting-label">Choose Template</span>
+        <p class="setting-desc">Pick a starting layout. This overwrites your current design, then opens the editor.</p>
+
+        <div class="template-grid" id="template-grid">
+          {% for tid, tpl in templates.items() %}
+          <div class="template-card" data-template-id="{{ tid }}">
+            <div class="tpl-thumb tpl-thumb--{{ tid }}">
+              {% if tpl.layout == 'row' %}
+                {% if tid == 'left-brand-panel' %}
+                  <div class="tpl-side tpl-side--dark"></div><div class="tpl-card-mock"></div>
+                {% else %}
+                  <div class="tpl-card-mock"></div><div class="tpl-side tpl-side--light"></div>
+                {% endif %}
+              {% elif tid == 'marketing-header' %}
+                <div class="tpl-bar tpl-bar--dark"></div><div class="tpl-card-mock"></div><div class="tpl-bar tpl-bar--border"></div>
+              {% elif tid == 'announcement-banner' %}
+                <div class="tpl-bar tpl-bar--dark"></div><div class="tpl-card-mock"></div><div class="tpl-footer-3col"></div>
+              {% elif tid == 'stepped-onboarding' %}
+                <div class="tpl-progress-bar"></div><div class="tpl-card-mock"></div><div class="tpl-dots"><div></div><div></div><div></div></div>
+              {% else %}
+                <div class="tpl-card-mock"></div>
+              {% endif %}
+            </div>
+            <div class="tpl-card-name">{{ tpl.name }}</div>
+            <div class="tpl-card-desc">{{ tpl.description }}</div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="tpl-actions" id="tpl-actions" style="display:none;">
+          <span id="tpl-selected-label" class="tpl-selected-label"></span>
+          <button class="btn btn-sm" id="btn-apply-tpl">Apply &amp; Open Editor</button>
+        </div>
+      </div>
+
+      <!-- ── Edit current page directly ─────────────────────── -->
+      <div class="setting-item">
+        <span class="setting-label">Auth Page Customization</span>
+        <p class="setting-desc">Edit the current auth page layout directly in the editor.</p>
+        <a href="/dashboard/service/{{ service.service_name }}/edit-page" class="btn btn-sm" style="display:inline-block;text-decoration:none;text-align:center;">Edit Auth Page</a>
+      </div>
+
+      <div class="setting-item">
+        <span class="setting-label">Created</span>
+        <span class="setting-value-plain">{{ service.created_at | fmt_time }}</span>
+      </div>
+
+      <div class="setting-item setting-danger">
+        <span class="setting-label">Danger Zone</span>
+        <p class="setting-desc">Permanently delete this service and all its user data. This cannot be undone.</p>
+        <button class="btn-delete-service" data-service="{{ service.service_name }}">Delete {{ service.service_name }}</button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script src="/static/service_detail.js"></script>
+</body>
+</html>

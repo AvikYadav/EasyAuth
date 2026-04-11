@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Auth Page — {{ service_name }}</title>
+
+  <!-- GrapeJS core (drag-drop only — we do NOT use its style manager) -->
+  <link rel="stylesheet" href="https://unpkg.com/grapesjs@0.21.13/dist/css/grapes.min.css" />
+  <script src="https://unpkg.com/grapesjs@0.21.13/dist/grapes.min.js"></script>
+  <script src="https://unpkg.com/grapesjs-blocks-basic@1.0.2/dist/index.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #f7f6f2; --surface: #fff; --ink: #111110;
+      --muted: #888884; --border: #e2e1da; --accent: #111110;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--ink);
+      display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 56px; background: var(--surface);
+      border-bottom: none; flex-shrink: 0; position: relative;
+    }
+    .topbar::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #34d399, #3b82f6, #a78bfa);
+    }
+    .topbar .wordmark {
+      font-family: 'DM Sans', sans-serif; font-size: 18px; font-weight: 600;
+      letter-spacing: -0.01em; color: var(--ink); text-transform: none;
+    }
+    .wordmark-accent { font-weight: 400; color: var(--muted); margin-left: 2px; }
+    .topbar-center {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted);
+    }
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    .topbar-right a {
+      font-size: 13px; color: var(--muted); text-decoration: none; transition: color .15s;
+    }
+    .topbar-right a:hover { color: var(--ink); }
+    .btn-save {
+      padding: 7px 22px; background: var(--ink); color: #fff; border: none;
+      border-radius: 5px; font-family: 'DM Sans', sans-serif; font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: all .15s;
+    }
+    .btn-save:hover { opacity: .88; }
+    .btn-save.saved { background: #16a34a; }
+
+    /* ── Layout ── */
+    .editor-body { flex: 1; display: flex; overflow: hidden; }
+
+    /* ── Left sidebar (blocks) ── */
+    .sidebar {
+      width: 220px; flex-shrink: 0; background: var(--surface);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .sidebar-header {
+      padding: 14px 16px 10px; font-family: 'DM Mono', monospace; font-size: 10px;
+      text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+      border-bottom: 1px solid var(--border); font-weight: 500;
+    }
+    .sidebar-scroll { flex: 1; overflow-y: auto; padding: 8px; }
+
+    /* ── Canvas ── */
+    .canvas-wrap { flex: 1; overflow: hidden; background: #eceee9; }
+    #gjs { height: 100%; }
+
+    /* ── Right sidebar (custom style panel) ── */
+    .panel-right {
+      width: 270px; flex-shrink: 0; background: var(--surface);
+      border-left: 1px solid var(--border); display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-right-scroll { flex: 1; overflow-y: auto; padding: 0; }
+
+    /* ── Style panel controls ── */
+    .panel-section {
+      border-bottom: 1px solid var(--border); padding: 16px;
+    }
+    .panel-section:last-child { border-bottom: none; }
+    .panel-section-title {
+      font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500;
+      text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .ctrl-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .ctrl-row:last-child { margin-bottom: 0; }
+    .ctrl-label {
+      font-size: 12px; color: var(--ink); font-weight: 400;
+    }
+    .ctrl-color {
+      width: 32px; height: 24px; border: 1px solid var(--border);
+      border-radius: 4px; cursor: pointer; padding: 0; background: none;
+    }
+    .ctrl-color::-webkit-color-swatch-wrapper { padding: 0; }
+    .ctrl-color::-webkit-color-swatch { border: none; border-radius: 3px; }
+    .ctrl-select {
+      padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px;
+      font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--ink);
+      background: var(--bg); cursor: pointer; min-width: 100px;
+    }
+    .ctrl-range-wrap {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ctrl-range {
+      width: 80px; accent-color: var(--ink);
+    }
+    .ctrl-range-val {
+      font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
+      min-width: 28px; text-align: right;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--ink); color: #fff; padding: 10px 24px; border-radius: 6px;
+      font-size: 13px; font-family: 'DM Mono', monospace; opacity: 0;
+      transition: opacity .25s; pointer-events: none; z-index: 9999;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── GrapeJS overrides ── */
+    .gjs-one-bg   { background-color: var(--surface) !important; }
+    .gjs-two-color { color: var(--ink) !important; }
+    .gjs-three-bg  { background-color: var(--bg) !important; }
+    .gjs-four-color, .gjs-four-color-h:hover { color: var(--ink) !important; }
+    .gjs-blocks-cs { padding: 0 !important; }
+    .gjs-block {
+      width: calc(50% - 4px) !important; min-height: 60px !important;
+      margin: 2px !important; border: 1px solid var(--border) !important;
+      border-radius: 6px !important; background: var(--bg) !important;
+      transition: border-color .15s !important; font-family: 'DM Sans', sans-serif !important;
+      font-size: 11px !important; color: var(--muted) !important;
+    }
+    .gjs-block:hover { border-color: var(--ink) !important; color: var(--ink) !important; }
+    .gjs-pn-panel { border: none !important; }
+    .gjs-pn-commands, .gjs-pn-options, .gjs-pn-views,
+    .gjs-pn-views-container { display: none !important; }
+
+    /* ── Style manager inside our right panel ── */
+    #gjs-sm .gjs-sm-sector-title {
+      font-family: 'DM Mono', monospace !important; font-size: 10px !important;
+      font-weight: 500 !important; text-transform: uppercase !important;
+      letter-spacing: .1em !important; color: var(--muted) !important;
+      background: var(--surface) !important; border: none !important;
+      border-bottom: 1px solid var(--border) !important; padding: 8px 0 !important;
+      cursor: pointer !important;
+    }
+    #gjs-sm .gjs-sm-property { padding: 6px 0 !important; }
+    #gjs-sm .gjs-sm-label {
+      font-size: 12px !important; color: var(--ink) !important;
+      font-family: 'DM Sans', sans-serif !important;
+    }
+    #gjs-sm input, #gjs-sm select {
+      border: 1px solid var(--border) !important; border-radius: 4px !important;
+      font-family: 'DM Sans', sans-serif !important; font-size: 12px !important;
+      color: var(--ink) !important; background: var(--bg) !important;
+      padding: 4px 6px !important;
+    }
+    #gjs-sm .gjs-sm-sector { border: none !important; margin-bottom: 4px !important; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Topbar ── -->
+  <div class="topbar">
+    <span class="wordmark">EasyAuth <span class="wordmark-accent">Editor</span></span>
+    <div class="topbar-center">{{ service_name }} / auth page</div>
+    <div class="topbar-right">
+      <a href="/auth/{{ username }}/{{ service_name }}" target="_blank">Preview</a>
+      <a href="/dashboard/service/{{ service_name }}">Back</a>
+      <button class="btn-save" id="btn-save">Save</button>
+    </div>
+  </div>
+
+  <!-- ── Editor body ── -->
+  <div class="editor-body">
+
+    <!-- Left: blocks -->
+    <div class="sidebar">
+      <div class="sidebar-header">Blocks</div>
+      <div class="sidebar-scroll" id="blocks-panel"></div>
+    </div>
+
+    <!-- Center: canvas -->
+    <div class="canvas-wrap">
+      <div id="gjs"></div>
+    </div>
+
+    <!-- Right: custom style panel -->
+    <div class="panel-right">
+      <div class="sidebar-header">Styles</div>
+      <div class="panel-right-scroll">
+
+        <!-- PAGE -->
+        <div class="panel-section">
+          <div class="panel-section-title">Page</div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Background</span>
+            <input type="color" class="ctrl-color" id="s-page-bg" value="#f7f6f2" />
+          </div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Card position</span>
+            <select class="ctrl-select" id="s-page-align">
+              <option value="flex-start">Top</option>
+              <option value="center" selected>Center</option>
+              <option value="flex-end">Bottom</option>
+            </select>
+          </div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Layout</span>
+            <select class="ctrl-select" id="s-page-layout">
+              <option value="column" selected>Stacked</option>
+              <option value="row">Side by Side</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- CARD -->
+        <div class="panel-section">
+          <div class="panel-section-title">Card</div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Background</span>
+            <input type="color" class="ctrl-color" id="s-card-bg" value="#ffffff" />
+          </div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Border color</span>
+            <input type="color" class="ctrl-color" id="s-card-border" value="#e2e1da" />
+          </div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Border radius</span>
+            <div class="ctrl-range-wrap">
+              <input type="range" class="ctrl-range" id="s-card-radius" min="0" max="32" value="12" />
+              <span class="ctrl-range-val" id="v-card-radius">12</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TYPOGRAPHY -->
+        <div class="panel-section">
+          <div class="panel-section-title">Typography</div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Heading</span>
+            <input type="color" class="ctrl-color" id="s-heading-color" value="#111110" />
+          </div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Labels</span>
+            <input type="color" class="ctrl-color" id="s-label-color" value="#888884" />
+          </div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Input text</span>
+            <input type="color" class="ctrl-color" id="s-input-color" value="#111110" />
+          </div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Input bg</span>
+            <input type="color" class="ctrl-color" id="s-input-bg" value="#f7f6f2" />
+          </div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Input border</span>
+            <input type="color" class="ctrl-color" id="s-input-border" value="#e2e1da" />
+          </div>
+        </div>
+
+        <!-- BUTTON -->
+        <div class="panel-section">
+          <div class="panel-section-title">Button</div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Background</span>
+            <input type="color" class="ctrl-color" id="s-btn-bg" value="#111110" />
+          </div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Text color</span>
+            <input type="color" class="ctrl-color" id="s-btn-color" value="#ffffff" />
+          </div>
+          <div class="ctrl-row">
+            <span class="ctrl-label">Border radius</span>
+            <div class="ctrl-range-wrap">
+              <input type="range" class="ctrl-range" id="s-btn-radius" min="0" max="24" value="6" />
+              <span class="ctrl-range-val" id="v-btn-radius">6</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SELECTED ELEMENT (GrapeJS style manager) -->
+        <div id="gjs-sm-wrapper" style="display:none;">
+          <div class="panel-section" style="border-top: 2px solid var(--ink); padding-top: 14px;">
+            <div class="panel-section-title" style="color: var(--ink);">Selected Element</div>
+            <div id="gjs-sm"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* ================================================================
+       DATA FROM SERVER
+       ================================================================ */
+    const savedAboveHtml = {{ page_above_html | tojson }};
+    const savedBelowHtml = {{ page_below_html | tojson }};
+    const savedStyleData = {{ page_style_data | tojson }};
+
+    /* ================================================================
+       DEFAULT STYLE VALUES
+       ================================================================ */
+    const DEFAULTS = {
+      pageBg:      '#f7f6f2',
+      pageAlign:   'center',
+      pageLayout:  'column',
+      cardBg:      '#ffffff',
+      cardBorder:  '#e2e1da',
+      cardRadius:  '12',
+      headingColor:'#111110',
+      labelColor:  '#888884',
+      inputColor:  '#111110',
+      inputBg:     '#f7f6f2',
+      inputBorder: '#e2e1da',
+      btnBg:       '#111110',
+      btnColor:    '#ffffff',
+      btnRadius:   '6',
+    };
+
+    /* Map: style key → form element ID */
+    const FIELD_MAP = {
+      pageBg:      's-page-bg',
+      pageAlign:   's-page-align',
+      pageLayout:  's-page-layout',
+      cardBg:      's-card-bg',
+      cardBorder:  's-card-border',
+      cardRadius:  's-card-radius',
+      headingColor:'s-heading-color',
+      labelColor:  's-label-color',
+      inputColor:  's-input-color',
+      inputBg:     's-input-bg',
+      inputBorder: 's-input-border',
+      btnBg:       's-btn-bg',
+      btnColor:    's-btn-color',
+      btnRadius:   's-btn-radius',
+    };
+
+    /* ================================================================
+       POPULATE FORM FROM SAVED DATA
+       ================================================================ */
+    function loadStyleData() {
+      let data = {};
+      if (savedStyleData) {
+        try { data = typeof savedStyleData === 'string' ? JSON.parse(savedStyleData) : savedStyleData; }
+        catch (e) { data = {}; }
+      }
+      for (const [key, elId] of Object.entries(FIELD_MAP)) {
+        const el = document.getElementById(elId);
+        if (el) el.value = data[key] || DEFAULTS[key];
+      }
+      // Sync range labels
+      document.getElementById('v-card-radius').textContent = document.getElementById('s-card-radius').value;
+      document.getElementById('v-btn-radius').textContent  = document.getElementById('s-btn-radius').value;
+    }
+
+    /* ================================================================
+       READ FORM → STYLE OBJECT
+       ================================================================ */
+    function getStyleValues() {
+      const s = {};
+      for (const [key, elId] of Object.entries(FIELD_MAP)) {
+        s[key] = document.getElementById(elId).value;
+      }
+      return s;
+    }
+
+    /* ================================================================
+       BUILD CSS STRING (correct class selectors)
+       ================================================================ */
+    function buildCss(s) {
+      var layoutCss = s.pageLayout === 'row'
+        ? '.page-wrapper { flex-direction: row; align-items: stretch; }\n'
+          + '.above-card { flex: 1; max-width: none; }\n'
+          + '.below-card { flex: 1; max-width: none; }\n'
+          + '.card { align-self: center; margin: 0 5%; flex-shrink: 0; }\n'
+        : '.page-wrapper { flex-direction: column; align-items: center; justify-content: ' + s.pageAlign + '; }\n'
+          + '.above-card, .below-card { width: 100%; max-width: 500px; }\n';
+      return (
+        'html, body { background-color: ' + s.pageBg + '; margin: 0; padding: 0; }\n'
+        + '.page-wrapper { background-color: ' + s.pageBg + '; }\n'
+        + layoutCss
+        + '.card { background-color: ' + s.cardBg + '; border-color: ' + s.cardBorder + '; border-radius: ' + s.cardRadius + 'px; }\n'
+        + '.card h1 { color: ' + s.headingColor + '; }\n'
+        + '.field label { color: ' + s.labelColor + '; }\n'
+        + '.field input { color: ' + s.inputColor + '; background-color: ' + s.inputBg + '; border-color: ' + s.inputBorder + '; }\n'
+        + '.card .btn { background-color: ' + s.btnBg + '; color: ' + s.btnColor + '; border-radius: ' + s.btnRadius + 'px; }\n'
+        + '.tabs { border-color: ' + s.cardBorder + '; }\n'
+        + '.tab.active { background-color: ' + s.btnBg + '; color: ' + s.btnColor + '; }\n'
+        + '.wordmark { color: ' + s.labelColor + '; }\n'
+        + '.powered-by { color: ' + s.labelColor + '; }\n'
+      );
+    }
+
+    /* ================================================================
+       BASE CSS — injected into GrapeJS canvas iframe
+       (matches static/style.css auth page defaults)
+       ================================================================ */
+    const BASE_CSS = `
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { background: #f7f6f2; margin: 0; padding: 0; }
+      .page-wrapper {
+        background: #f7f6f2;
+        font-family: 'DM Sans', sans-serif;
+        color: #111110;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        width: 100%;
+      }
+      .above-card, .below-card { width: 100%; max-width: 500px; }
+      .card {
+        background: #ffffff;
+        border: 1px solid #e2e1da;
+        border-radius: 12px;
+        padding: 48px 44px;
+        width: 100%;
+        max-width: 400px;
+      }
+      .wordmark {
+        font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500;
+        letter-spacing: 0.12em; text-transform: uppercase; color: #888884;
+        margin-bottom: 36px;
+      }
+      .tabs {
+        display: flex; border: 1px solid #e2e1da;
+        border-radius: 6px; overflow: hidden; margin-bottom: 24px;
+      }
+      .tab {
+        flex: 1; padding: 9px; background: none; border: none;
+        font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+        color: #888884; cursor: default;
+      }
+      .tab.active { background: #111110; color: #fff; }
+      .card h1 {
+        font-size: 22px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 6px;
+      }
+      .field { margin-bottom: 18px; }
+      .field label {
+        display: block; font-size: 12px; font-weight: 500; letter-spacing: 0.06em;
+        text-transform: uppercase; color: #888884; margin-bottom: 7px;
+      }
+      .field input {
+        width: 100%; padding: 11px 14px; border: 1px solid #e2e1da;
+        border-radius: 6px; background: #f7f6f2;
+        font-family: 'DM Sans', sans-serif; font-size: 14px; color: #111110;
+      }
+      .card .btn {
+        width: 100%; padding: 13px; margin-top: 8px; background: #111110;
+        color: #fff; border: none; border-radius: 6px;
+        font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+        cursor: default;
+      }
+      .powered-by {
+        display: block; text-align: right; margin-top: 20px;
+        font-family: 'DM Mono', monospace; font-size: 11px;
+        letter-spacing: 0.04em; color: #888884;
+      }
+    `;
+
+    /* ================================================================
+       LOCKED CARD COMPONENT (GrapeJS tree)
+       ================================================================ */
+    const L = {
+      removable: false, draggable: false, copyable: false,
+      droppable: false, selectable: false, highlightable: false, editable: false,
+    };
+
+    const lockedCard = {
+      tagName: 'div', classes: ['card'],
+      removable: false, draggable: false, copyable: false, droppable: false,
+      selectable: false, highlightable: false,
+      name: 'Auth Card',
+      components: [
+        { tagName: 'div', classes: ['wordmark'], content: '{{ service_name }}', ...L },
+        {
+          tagName: 'div', classes: ['tabs'],
+          ...L, editable: undefined,
+          components: [
+            { tagName: 'button', classes: ['tab', 'active'], content: 'Sign up', ...L },
+            { tagName: 'button', classes: ['tab'], content: 'Log in', ...L },
+          ]
+        },
+        { tagName: 'h1', content: 'Create account', ...L },
+        {
+          tagName: 'div', classes: ['field'], ...L, editable: undefined,
+          components: [
+            { tagName: 'label', content: 'Username', ...L },
+            { tagName: 'input', void: true, attributes: { type: 'text', placeholder: 'john_doe', disabled: true },
+              removable: false, draggable: false, copyable: false, droppable: false,
+              selectable: false, highlightable: false },
+          ]
+        },
+        {
+          tagName: 'div', classes: ['field'], ...L, editable: undefined,
+          components: [
+            { tagName: 'label', content: 'Email', ...L },
+            { tagName: 'input', void: true, attributes: { type: 'email', placeholder: 'you@example.com', disabled: true },
+              removable: false, draggable: false, copyable: false, droppable: false,
+              selectable: false, highlightable: false },
+          ]
+        },
+        {
+          tagName: 'div', classes: ['field'], ...L, editable: undefined,
+          components: [
+            { tagName: 'label', content: 'Password', ...L },
+            { tagName: 'input', void: true, attributes: { type: 'password', placeholder: 'Min. 8 characters', disabled: true },
+              removable: false, draggable: false, copyable: false, droppable: false,
+              selectable: false, highlightable: false },
+          ]
+        },
+        { tagName: 'button', classes: ['btn'], content: 'Create account', attributes: { disabled: true }, ...L },
+        { tagName: 'span', classes: ['powered-by'], content: 'Powered by easy-auth', ...L },
+      ]
+    };
+
+    /* ================================================================
+       INIT GRAPEJS (drag-drop only — no style manager)
+       ================================================================ */
+    const editor = grapesjs.init({
+      container: '#gjs',
+      height: '100%',
+      width: '100%',
+      fromElement: false,
+      storageManager: false,
+
+      plugins: ['gjs-blocks-basic'],
+      pluginsOpts: {
+        'gjs-blocks-basic': {
+          blocks: ['column1', 'column2', 'column3', 'column3-7', 'text', 'link'],
+        }
+      },
+
+      panels: { defaults: [] },
+      blockManager: { appendTo: '#blocks-panel' },
+
+      styleManager: {
+        appendTo: '#gjs-sm',
+        sectors: [
+          {
+            name: 'Layout',
+            buildProps: ['display', 'flex-direction', 'align-items', 'justify-content', 'flex-wrap', 'gap'],
+          },
+          {
+            name: 'Dimension',
+            buildProps: ['width', 'max-width', 'height', 'padding', 'margin'],
+          },
+          {
+            name: 'Typography',
+            buildProps: ['font-family', 'font-size', 'font-weight', 'color', 'text-align', 'line-height'],
+          },
+          {
+            name: 'Background',
+            buildProps: ['background-color'],
+          },
+          {
+            name: 'Border',
+            buildProps: ['border-radius', 'border-style', 'border-width', 'border-color'],
+          },
+        ]
+      },
+
+      components: [
+        {
+          tagName: 'div',
+          attributes: { id: 'page-wrapper' },
+          classes: ['page-wrapper'],
+          name: 'Page Background',
+          removable: false, draggable: false, copyable: false,
+          selectable: false, highlightable: false, droppable: false,
+          components: [
+            {
+              tagName: 'div',
+              attributes: { id: 'above-card' },
+              classes: ['above-card'],
+              name: 'Above Card',
+              removable: false, draggable: false, copyable: false,
+              selectable: false, highlightable: true,
+              droppable: true,
+              components: savedAboveHtml || [],
+            },
+            lockedCard,
+            {
+              tagName: 'div',
+              attributes: { id: 'below-card' },
+              classes: ['below-card'],
+              name: 'Below Card',
+              removable: false, draggable: false, copyable: false,
+              selectable: false, highlightable: true,
+              droppable: true,
+              components: savedBelowHtml || [],
+            },
+          ]
+        }
+      ],
+
+      /* Empty style — we inject CSS into the canvas iframe ourselves */
+      style: '',
+
+      canvas: {
+        styles: [
+          'https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap'
+        ],
+      },
+    });
+
+    /* ================================================================
+       INJECT CSS INTO CANVAS IFRAME
+       ================================================================ */
+    editor.on('load', () => {
+      const doc = editor.Canvas.getDocument();
+      if (!doc) return;
+
+      /* Base auth page styles */
+      const baseStyle = doc.createElement('style');
+      baseStyle.id = 'base-css';
+      baseStyle.textContent = BASE_CSS;
+      doc.head.appendChild(baseStyle);
+
+      /* Custom overrides (updated live) */
+      const customStyle = doc.createElement('style');
+      customStyle.id = 'custom-css';
+      doc.head.appendChild(customStyle);
+
+      /* Editor-only: empty zone placeholders */
+      const helperStyle = doc.createElement('style');
+      helperStyle.id = 'editor-helpers';
+      helperStyle.textContent = `
+        .above-card:empty, .below-card:empty {
+          min-height: 80px;
+          border: 2px dashed #d5d4ce;
+          border-radius: 8px;
+          position: relative;
+        }
+        .above-card:empty::after {
+          content: 'Drop blocks above the card';
+          position: absolute; top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 12px; color: #aaa; font-family: 'DM Sans', sans-serif;
+          pointer-events: none; white-space: nowrap;
+        }
+        .below-card:empty::after {
+          content: 'Drop blocks below the card';
+          position: absolute; top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 12px; color: #aaa; font-family: 'DM Sans', sans-serif;
+          pointer-events: none; white-space: nowrap;
+        }
+      `;
+      doc.head.appendChild(helperStyle);
+
+      /* Apply saved or default styles */
+      updateCanvasPreview();
+    });
+
+    /* ================================================================
+       SELECTED ELEMENT — show/hide GrapeJS style manager
+       ================================================================ */
+    editor.on('component:selected', () => {
+      document.getElementById('gjs-sm-wrapper').style.display = 'block';
+      // Scroll to style section
+      document.getElementById('gjs-sm-wrapper').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+    editor.on('component:deselected', () => {
+      document.getElementById('gjs-sm-wrapper').style.display = 'none';
+    });
+
+    /* ================================================================
+       LIVE PREVIEW — push panel changes into canvas
+       ================================================================ */
+    function updateCanvasPreview() {
+      const doc = editor.Canvas.getDocument();
+      if (!doc) return;
+      const el = doc.getElementById('custom-css');
+      if (el) el.textContent = buildCss(getStyleValues());
+    }
+
+    /* Attach listeners to all panel controls */
+    document.querySelectorAll('.panel-right input, .panel-right select').forEach(el => {
+      el.addEventListener('input', () => {
+        /* Sync range value labels */
+        if (el.id === 's-card-radius') document.getElementById('v-card-radius').textContent = el.value;
+        if (el.id === 's-btn-radius')  document.getElementById('v-btn-radius').textContent  = el.value;
+        updateCanvasPreview();
+      });
+    });
+
+    /* ================================================================
+       CUSTOM BLOCKS
+       ================================================================ */
+    editor.BlockManager.add('brand-header', {
+      label: 'Brand Header', category: 'Auth Page',
+      content: `<div style="text-align:center;margin-bottom:24px;width:100%;">
+        <h2 style="font-size:1.5rem;font-weight:600;margin-bottom:4px;">Your Brand</h2>
+        <p style="font-size:13px;color:#888884;">Welcome to our platform</p>
+      </div>`
+    });
+    editor.BlockManager.add('logo-block', {
+      label: 'Logo', category: 'Auth Page',
+      content: `<div style="text-align:center;margin-bottom:20px;width:100%;">
+        <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#111110,#333);margin:0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:700;">A</div>
+      </div>`
+    });
+    editor.BlockManager.add('tagline', {
+      label: 'Tagline', category: 'Auth Page',
+      content: `<p style="text-align:center;color:#888884;font-size:13px;font-family:'DM Mono',monospace;margin-bottom:20px;width:100%;">Secure authentication for your app</p>`
+    });
+    editor.BlockManager.add('footer-links', {
+      label: 'Footer Links', category: 'Auth Page',
+      content: `<div style="text-align:center;margin-top:20px;width:100%;">
+        <a href="#" style="font-size:12px;color:#888884;margin:0 8px;text-decoration:none;">Privacy</a>
+        <a href="#" style="font-size:12px;color:#888884;margin:0 8px;text-decoration:none;">Terms</a>
+        <a href="#" style="font-size:12px;color:#888884;margin:0 8px;text-decoration:none;">Help</a>
+      </div>`
+    });
+    editor.BlockManager.add('hero-banner', {
+      label: 'Hero Banner', category: 'Auth Page',
+      content: `<div style="width:100%;padding:3rem 2rem;text-align:center;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;margin-bottom:24px;border-radius:12px;">
+        <h1 style="font-size:2rem;font-weight:600;margin-bottom:0.5rem;">Welcome</h1>
+        <p style="opacity:0.8;font-size:1rem;">Sign in to access your account</p>
+      </div>`
+    });
+    editor.BlockManager.add('divider-line', {
+      label: 'Divider', category: 'Auth Page',
+      content: `<hr style="border:none;border-top:1px solid #e2e1da;margin:20px 0;width:100%;" />`
+    });
+    editor.BlockManager.add('spacer', {
+      label: 'Spacer', category: 'Auth Page',
+      content: `<div style="height:40px;width:100%;"></div>`
+    });
+
+    /* ================================================================
+       SAVE
+       ================================================================ */
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = type === 'error' ? '#c0392b' : '#111110';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function saveLayout() {
+      const wrapper = editor.getWrapper();
+      const above = wrapper.find('#above-card')[0];
+      const below = wrapper.find('#below-card')[0];
+
+      if (!above || !below) {
+        showToast('Layout zones not found', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-save');
+      btn.textContent = 'Saving...';
+
+      const styleValues = getStyleValues();
+
+      fetch('/dashboard/service/{{ service_name }}/save-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          above_html: above.getInnerHTML(),
+          below_html: below.getInnerHTML(),
+          css:        buildCss(styleValues),
+          style_data: JSON.stringify(styleValues),
+        })
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok) {
+          btn.textContent = 'Saved';
+          btn.classList.add('saved');
+          showToast('Saved');
+          setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 2000);
+        } else {
+          showToast('Save failed: ' + (d.error || ''), 'error');
+          btn.textContent = 'Save';
+        }
+      })
+      .catch(() => {
+        showToast('Network error', 'error');
+        btn.textContent = 'Save';
+      });
+    }
+
+    document.getElementById('btn-save').addEventListener('click', saveLayout);
+
+    // Ctrl+S / Cmd+S
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveLayout();
+      }
+    });
+
+    /* ================================================================
+       INIT: load saved values into panel
+       ================================================================ */
+    loadStyleData();
+  </script>
+</body>
+</html>
