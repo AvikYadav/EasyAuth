@@ -1,7 +1,7 @@
 {
   "title": "easy-auth",
   "tagline": "Auth setup under a minute",
-  "shortSummary": "One line authentication at any web service with database",
+  "shortSummary": "EasyAuth is a fast, fully hosted authentication system that lets developers integrate secure login flows into any app in under a minute. It provides customizable UI templates, robust security, encrypted tokens, custom data storage, and easy SDK integration, saving days of development time. Open source self hosting is also supported.",
 
   "github": {
     "repoUrl": "https://github.com/AvikYadav/EasyAuth",
