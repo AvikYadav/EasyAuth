@@ -1,0 +1,16 @@
+{
+  "title": "easy-auth",
+  "tagline": "Auth setup under a minute",
+  "shortSummary": "One line authentication at any web service with database",
+
+  "github": {
+    "repoUrl": "https://github.com/AvikYadav/EasyAuth",
+    "coverImagePath": "images/cover.png",
+    "showcaseImagePath": "images/main-banner.png"
+  },
+
+  "deployment": {
+    "isLive": true,
+    "liveUrl": "https://easy-auth.dev"
+  }
+}
